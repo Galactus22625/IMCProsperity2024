@@ -25,59 +25,50 @@ class Trader:
     def amethystsTrader(self, orderDepth, currentPosition):
         #logging.print(currentPosition)
         positionLimit = 20
-        buyLimit = positionLimit - currentPosition
-        sellLimit = positionLimit + currentPosition
+        position = currentPosition
+        buyLimit = positionLimit - position
+        sellLimit = positionLimit + position
         neutralPrice = 10000
         orders: List[Order] = []
 
 
-        active_sell_orders = list(orderDepth.sell_orders.items())
+        active_sell_orders = [x for x in list(orderDepth.sell_orders.items()) if x[0] < neutralPrice]
         active_sell_orders.sort(key = lambda x: x[0], reverse = False)
-        active_buy_orders = list(orderDepth.buy_orders.items())
+        active_buy_orders = [x for x in list(orderDepth.buy_orders.items()) if x[0] > neutralPrice]
         active_buy_orders.sort(key = lambda x: x[0], reverse = True)
-        currentbuy = list(active_buy_orders.pop(0)) #price quantity
-        currentsell = list(active_sell_orders.pop(0))  #price, quantity
-        done = False
-        while not done:
-            currentsellprice = currentsell[0]
-            currentsellquantity = currentsell[1]
-            currentbuyprice = currentbuy[0]
-            currentbuyquantity = currentbuy[1]
-            numberoforders = len(orders)
-            if currentsellprice < neutralPrice:
-                if abs(currentsellquantity) <= buyLimit:
-                    orders.append(Order("AMETHYSTS", currentsellprice, -currentsellquantity))
-                    buyLimit += currentsellquantity
-                    sellLimit -= currentsellquantity
-                    try:
-                        currentsell = list(active_sell_orders.pop(0))
-                    except IndexError:
-                        done = True
-                else:
-                    orders.append(Order("AMETHYSTS", currentsellprice, buyLimit))
-                    buyLimit -= buyLimit
-                    sellLimit += buyLimit
-                    currentsell[1] -= buyLimit
-            if currentbuyprice > neutralPrice:
-                if currentbuyquantity <= sellLimit:
-                    orders.append(Order("AMETHYSTS", currentbuyprice, -currentbuyquantity))
-                    sellLimit -= currentbuyquantity
-                    buyLimit += currentbuyquantity
-                    try:
-                        currentbuy = list(active_buy_orders.pop(0))
-                    except IndexError:
-                        done = True
-                else:
-                    orders.append(Order("AMETHYSTS", currentbuyprice, -sellLimit))
-                    sellLimit -= sellLimit
-                    buyLimit += sellLimit
-                    currentbuy[1] -= sellLimit
-            if len(orders) == numberoforders:
-                done = True
 
-        #finish with market maker
-        orders.append(Order("AMETHYSTS", neutralPrice - 1, buyLimit))
-        orders.append(Order("AMETHYSTS", neutralPrice + 1, -sellLimit))
+        while True:
+            if active_sell_orders and position < 20:
+                buyLimit = positionLimit - position
+                price = active_sell_orders[0][0]
+                quantity = -active_sell_orders[0][1]
+                if quantity <= buyLimit:
+                    orders.append(Order("AMETHYSTS", price, quantity))
+                    position += quantity
+                    active_sell_orders.pop(0)
+                else:
+                    orders.append(Order("AMETHYSTS", price, buyLimit))
+                    position += buyLimit
+            if active_buy_orders and position > -20:
+                sellLimit = positionLimit + position
+                price = active_buy_orders[0][0]
+                quantity = active_buy_orders[0][1]
+                if quantity <= sellLimit:
+                    orders.append(Order("AMETHYSTS", price, -quantity))
+                    position -= quantity
+                    active_buy_orders.pop(0)
+                else:
+                    orders.append(Order("AMETHYSTS", price, -sellLimit))
+                    position -= sellLimit
+            if (position == 20 and not active_buy_orders) or (position == -20 and not active_sell_orders) or (not active_sell_orders and not active_buy_orders):
+                break
+
+
+        # buyLimit = positionLimit - position
+        # sellLimit = positionLimit + position
+        # #finish with market maker
+        # orders.append(Order("AMETHYSTS", neutralPrice - 1, buyLimit))
+        # orders.append(Order("AMETHYSTS", neutralPrice + 1, -sellLimit))
 
         return orders
 
