@@ -22,7 +22,6 @@ class Trader:
         return tradeOrders, 0, traderData
     
     def amethystsTrader(self, orderDepth, currentPosition):
-        #logging.print(currentPosition)
         positionLimit = 20
         buyLimit = positionLimit - currentPosition
         sellLimit = positionLimit + currentPosition

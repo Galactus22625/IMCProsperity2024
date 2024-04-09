@@ -23,7 +23,6 @@ class Trader:
         return tradeOrders, 0, traderData
     
     def amethystsTrader(self, orderDepth, currentPosition):
-        #logging.print(currentPosition)
         positionLimit = 20
         position = currentPosition
         buyLimit = positionLimit - position
@@ -31,12 +30,12 @@ class Trader:
         neutralPrice = 10000
         orders: List[Order] = []
 
-
-        active_sell_orders = [x for x in list(orderDepth.sell_orders.items()) if x[0] < neutralPrice]
+        active_sell_orders = [list(x) for x in orderDepth.sell_orders.items()] #if x[0] < neutralPrice]
         active_sell_orders.sort(key = lambda x: x[0], reverse = False)
-        active_buy_orders = [x for x in list(orderDepth.buy_orders.items()) if x[0] > neutralPrice]
+        active_buy_orders = [list(x) for x in orderDepth.buy_orders.items()] #if x[0] > neutralPrice]
         active_buy_orders.sort(key = lambda x: x[0], reverse = True)
-
+        buys = 0
+        sells = 0
         while True:
             if active_sell_orders and position < 20:
                 buyLimit = positionLimit - position
@@ -46,9 +45,12 @@ class Trader:
                     orders.append(Order("AMETHYSTS", price, quantity))
                     position += quantity
                     active_sell_orders.pop(0)
+                    buys+= quantity
                 else:
                     orders.append(Order("AMETHYSTS", price, buyLimit))
+                    active_sell_orders[0][1] += buyLimit
                     position += buyLimit
+                    buys += buyLimit
             if active_buy_orders and position > -20:
                 sellLimit = positionLimit + position
                 price = active_buy_orders[0][0]
@@ -57,19 +59,23 @@ class Trader:
                     orders.append(Order("AMETHYSTS", price, -quantity))
                     position -= quantity
                     active_buy_orders.pop(0)
+                    sells += quantity
                 else:
                     orders.append(Order("AMETHYSTS", price, -sellLimit))
+                    active_buy_orders[0][1] -= sellLimit
                     position -= sellLimit
+                    sells += sellLimit
             if (position == 20 and not active_buy_orders) or (position == -20 and not active_sell_orders) or (not active_sell_orders and not active_buy_orders):
                 break
 
 
         # buyLimit = positionLimit - position
         # sellLimit = positionLimit + position
-        # #finish with market maker
+        # # #finish with market maker
         # orders.append(Order("AMETHYSTS", neutralPrice - 1, buyLimit))
         # orders.append(Order("AMETHYSTS", neutralPrice + 1, -sellLimit))
-
+        print(f"buys = {buys}")
+        print(f"sells = {sells}")
         return orders
 
     def starFruitTrader(self, orderDepth, currentPosition):
