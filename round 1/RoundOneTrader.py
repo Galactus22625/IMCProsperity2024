@@ -37,6 +37,7 @@ class Trader:
                     sellLimit -= quantity
                 else:
                     orders.append(Order("AMETHYSTS", price, -sellLimit))
+                    sellLimit = 0
                     break
             else:
                 break
@@ -50,6 +51,7 @@ class Trader:
                     buyLimit += quantity
                 else:
                     orders.append(Order("AMETHYSTS", price, buyLimit))
+                    buyLimit = 0
                     break
             else:
                 break
