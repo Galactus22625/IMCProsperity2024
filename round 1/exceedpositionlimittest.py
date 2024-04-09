@@ -15,7 +15,8 @@ class Trader:
                     tradeOrders[product] = self.amethystsTrader(state.order_depths[product], state.position.get(product, 0))
 
                 case "STARFRUIT":
-                    tradeOrders[product] = self.starFruitTrader(state.order_depths[product], state.position.get(product, 0))
+                    #tradeOrders[product] = self.starFruitTrader(state.order_depths[product], state.position.get(product, 0))
+                    pass
 
 
         traderData = "Knowledge for the future" #delivered as TradeingState.traderdata
@@ -29,31 +30,55 @@ class Trader:
         neutralPrice = 10000
         orders: List[Order] = []
 
-        active_buy_orders = list(orderDepth.buy_orders.items())
-        active_buy_orders.sort(key = lambda x: x[0], reverse = True)
-        for price, quantity in active_buy_orders:
-            if price > neutralPrice:
-                if quantity < sellLimit:
-                    orders.append(Order("AMETHYSTS", price, -quantity))
-                    sellLimit -= quantity
-                else:
-                    orders.append(Order("AMETHYSTS", price, -sellLimit))
-                    break
-            else:
-                break
 
         active_sell_orders = list(orderDepth.sell_orders.items())
         active_sell_orders.sort(key = lambda x: x[0], reverse = False)
-        for price, quantity in active_sell_orders:
-            if price < neutralPrice:
-                if abs(quantity) <= buyLimit:
-                    orders.append(Order("AMETHYSTS", price, -quantity))
-                    buyLimit += quantity
+        active_buy_orders = list(orderDepth.buy_orders.items())
+        active_buy_orders.sort(key = lambda x: x[0], reverse = True)
+        currentbuy = list(active_buy_orders.pop(0)) #price quantity
+        currentsell = list(active_sell_orders.pop(0))  #price, quantity
+        done = False
+        while not done:
+            currentsellprice = currentsell[0]
+            currentsellquantity = currentsell[1]
+            currentbuyprice = currentbuy[0]
+            currentbuyquantity = currentbuy[1]
+            numberoforders = len(orders)
+            if currentsellprice < neutralPrice:
+                if abs(currentsellquantity) <= buyLimit:
+                    orders.append(Order("AMETHYSTS", currentsellprice, -currentsellquantity))
+                    buyLimit += currentsellquantity
+                    sellLimit -= currentsellquantity
+                    try:
+                        currentsell = list(active_sell_orders.pop(0))
+                    except IndexError:
+                        done = True
                 else:
-                    orders.append(Order("AMETHYSTS", price, buyLimit))
-                    break
-            else:
-                break
+                    orders.append(Order("AMETHYSTS", currentsellprice, buyLimit))
+                    buyLimit -= buyLimit
+                    sellLimit += buyLimit
+                    currentsell[1] -= buyLimit
+            if currentbuyprice > neutralPrice:
+                if currentbuyquantity <= sellLimit:
+                    orders.append(Order("AMETHYSTS", currentbuyprice, -currentbuyquantity))
+                    sellLimit -= currentbuyquantity
+                    buyLimit += currentbuyquantity
+                    try:
+                        currentbuy = list(active_buy_orders.pop(0))
+                    except IndexError:
+                        done = True
+                else:
+                    orders.append(Order("AMETHYSTS", currentbuyprice, -sellLimit))
+                    sellLimit -= sellLimit
+                    buyLimit += sellLimit
+                    currentbuy[1] -= sellLimit
+            if len(orders) == numberoforders:
+                done = True
+
+        #finish with market maker
+        orders.append(Order("AMETHYSTS", neutralPrice - 1, buyLimit))
+        orders.append(Order("AMETHYSTS", neutralPrice + 1, -sellLimit))
+
         return orders
 
     def starFruitTrader(self, orderDepth, currentPosition):
@@ -78,7 +103,7 @@ class Trader:
 
         if buyprice == None and sellprice == None:
             return orders
-            #if buy sell orders are empty, by the spreadsheets this never happens
+            #if buy sell orders are empty, buy the spreadsheets this never happens
         elif buyprice == None:
             buyprice = sellprice - minimumSpread
         elif sellprice == None:
