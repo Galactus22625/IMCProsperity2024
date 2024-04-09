@@ -12,7 +12,8 @@ class Trader:
         for product in state.order_depths:
             match product:
                 case "AMETHYSTS":
-                    tradeOrders[product] = self.amethystsTrader(state.order_depths[product], state.position.get(product, 0))
+                    pass
+                    #tradeOrders[product] = self.amethystsTrader(state.order_depths[product], state.position.get(product, 0))
 
                 case "STARFRUIT":
                     tradeOrders[product] = self.starFruitTrader(state.order_depths[product], state.position.get(product, 0))
@@ -67,17 +68,28 @@ class Trader:
         #neutralPrice = 10000
         orders: List[Order] = []
 
+
         active_buy_orders = list(orderDepth.buy_orders.items())
         active_buy_orders.sort(key = lambda x: x[0], reverse = True)
-        if active_buy_orders:
-            buyprice = active_buy_orders[0][0]
-
         active_sell_orders = list(orderDepth.sell_orders.items())
         active_sell_orders.sort(key = lambda x: x[0])
+        if active_buy_orders:
+            buyprice = active_buy_orders[0][0]
         if active_sell_orders:
             sellprice = active_sell_orders[0][0]
 
-        if buyprice != None and sellprice != none:
-            orders.append(Order("STARFRUIT", buyprice, buyLimit))
-            orders.append(Order("STARFRUIT", sellprice, -sellLimit))
+        if buyprice == None and sellprice == None:
+            return orders
+        elif buyprice == None:
+            buyprice = sellprice - minimumSpread
+        elif sellprice == None:
+            sellprice = buyprice + minimumSpread
+
+        if currentPosition > 0: 
+            orders.append(Order("STARFRUIT", sellprice, -currentPosition))
+        elif currentPosition < 0:
+            orders.append(Order("STARFRUIT", buyprice, -currentPosition))
+        else:
+            orders.append(Order("STARFRUIT", buyprice, 10))
+            orders.append(Order("STARFRUIT", sellprice, -10))
         return orders
