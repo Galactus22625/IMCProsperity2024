@@ -12,8 +12,7 @@ class Trader:
         for product in state.order_depths:
             match product:
                 case "AMETHYSTS":
-                    pass
-                    #tradeOrders[product] = self.amethystsTrader(state.order_depths[product], state.position.get(product, 0))
+                    tradeOrders[product] = self.amethystsTrader(state.order_depths[product], state.position.get(product, 0))
 
                 case "STARFRUIT":
                     tradeOrders[product] = self.starFruitTrader(state.order_depths[product], state.position.get(product, 0))
@@ -59,12 +58,13 @@ class Trader:
 
     def starFruitTrader(self, orderDepth, currentPosition):
         #test for starfruit no neutral price
+        #things to try: force the spread so we can alwasy trade, larger spread, some undercutting, more trades that dont just go to position limit
         positionLimit = 20
         buyLimit = positionLimit - currentPosition
         sellLimit = positionLimit + currentPosition
         buyprice = None
         sellprice = None
-        minimumSpread = 3
+        minimumSpread = 4
         #neutralPrice = 10000
         orders: List[Order] = []
 
@@ -89,7 +89,7 @@ class Trader:
             orders.append(Order("STARFRUIT", sellprice, -currentPosition))
         elif currentPosition < 0:
             orders.append(Order("STARFRUIT", buyprice, -currentPosition))
-        else:
+        elif sellprice - buyprice > minimumSpread:
             orders.append(Order("STARFRUIT", buyprice, 10))
             orders.append(Order("STARFRUIT", sellprice, -10))
         return orders
