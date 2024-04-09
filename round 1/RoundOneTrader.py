@@ -53,6 +53,8 @@ class Trader:
                     break
             else:
                 break
+        orders.append(Order("AMETHYSTS", neutralPrice - 3, buyLimit))
+        orders.append(Order("AMETHYSTS", neutralPrice + 3, -sellLimit))
         return orders
 
     def starFruitTrader(self, orderDepth, currentPosition):
