@@ -61,19 +61,23 @@ class Trader:
         positionLimit = 20
         buyLimit = positionLimit - currentPosition
         sellLimit = positionLimit + currentPosition
+        buyprice = None
+        sellprice = None
+        minimumSpread = 3
         #neutralPrice = 10000
         orders: List[Order] = []
 
         active_buy_orders = list(orderDepth.buy_orders.items())
         active_buy_orders.sort(key = lambda x: x[0], reverse = True)
         if active_buy_orders:
-            price = active_buy_orders[0][0]
-            orders.append(Order("STARFRUIT", price + 1, buyLimit))
+            buyprice = active_buy_orders[0][0]
 
         active_sell_orders = list(orderDepth.sell_orders.items())
         active_sell_orders.sort(key = lambda x: x[0])
         if active_sell_orders:
-            price = active_sell_orders[0][0]
-            orders.append(Order("STARFRUIT", price -1, -sellLimit))
+            sellprice = active_sell_orders[0][0]
 
+        if buyprice != None and sellprice != none:
+            orders.append(Order("STARFRUIT", buyprice, buyLimit))
+            orders.append(Order("STARFRUIT", sellprice, -sellLimit))
         return orders
