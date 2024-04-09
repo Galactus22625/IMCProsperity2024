@@ -14,6 +14,10 @@ class Trader:
                 case "AMETHYSTS":
                     tradeOrders[product] = self.amethystsTrader(state.order_depths[product], state.position.get(product, 0))
 
+                case "STARFRUIT":
+                    tradeOrders[product] = self.starFruitTrader(state.order_depths[product], state.position.get(product, 0))
+
+
         traderData = "Knowledge for the future" #delivered as TradeingState.traderdata
         return tradeOrders, 1, traderData
     
@@ -28,7 +32,7 @@ class Trader:
         active_buy_orders = list(orderDepth.buy_orders.items())
         active_buy_orders.sort(key = lambda x: x[0], reverse = True)
         for price, quantity in active_buy_orders:
-            if price > neutralPrice + 1:
+            if price > neutralPrice:
                 if quantity < sellLimit:
                     orders.append(Order("AMETHYSTS", price, -quantity))
                     sellLimit -= quantity
@@ -41,7 +45,7 @@ class Trader:
         active_sell_orders = list(orderDepth.sell_orders.items())
         active_sell_orders.sort(key = lambda x: x[0])
         for price, quantity in active_sell_orders:
-            if price < neutralPrice - 1:
+            if price < neutralPrice:
                 if abs(quantity) <= buyLimit:
                     orders.append(Order("AMETHYSTS", price, -quantity))
                     buyLimit += quantity
@@ -52,6 +56,24 @@ class Trader:
                 break
         return orders
 
-    def starFruitTrader(self):
-        #look at observations and analyze maybe
-        pass
+    def starFruitTrader(self, orderDepth, currentPosition):
+        #test for starfruit no neutral price
+        positionLimit = 20
+        buyLimit = positionLimit - currentPosition
+        sellLimit = positionLimit + currentPosition
+        #neutralPrice = 10000
+        orders: List[Order] = []
+
+        active_buy_orders = list(orderDepth.buy_orders.items())
+        active_buy_orders.sort(key = lambda x: x[0], reverse = True)
+        if active_buy_orders:
+            price = active_buy_orders[0][0]
+            orders.append(Order("STARFRUIT", price + 1, buyLimit))
+
+        active_sell_orders = list(orderDepth.sell_orders.items())
+        active_sell_orders.sort(key = lambda x: x[0])
+        if active_sell_orders:
+            price = active_sell_orders[0][0]
+            orders.append(Order("STARFRUIT", price -1, -sellLimit))
+
+        return orders
