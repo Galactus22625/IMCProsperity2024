@@ -14,9 +14,9 @@ class Trader:
                     #tradeOrders[product] = self.amethystsTrader(state.order_depths[product], state.position.get(product, 0))
 
                 case "STARFRUIT":
-                    tradeOrders[product] = self.starFruitTrader(state.order_depths[product], state.position.get(product, 0), state.market_trades.get(product, []))
+                    tradeOrders[product], starfruitprice = self.starFruitTrader(state.order_depths[product], state.position.get(product, 0), state.market_trades.get(product, []))
 
-        traderData = "Knowledge for the future" #delivered as TradeingState.traderdata
+        traderData = "Knowledge for the future" #string(starfruitprice) #delivered as TradeingState.traderdata
         return tradeOrders, 0, traderData
     
     def arbitrageOrders(self, orders, product, truePrice, priceCushion, active_buy_orders, active_sell_orders, buyLimit, sellLimit):
@@ -75,7 +75,7 @@ class Trader:
         minimumSpread = 4
         orders: List[Order] = []
 
-        priceCushion = 5
+        priceCushion = 4
         tradedPriceQuantity = 0
         tradedQuantity = 0
         calculatedPrice = None
@@ -86,53 +86,34 @@ class Trader:
             calculatedPrice = tradedPriceQuantity/tradedQuantity
         #probably use previous prices in current price estimate
 
-
-        active_buy_orders = list(orderDepth.buy_orders.items())
-        active_buy_orders.sort(key = lambda x: x[0], reverse = True)
-        active_sell_orders = list(orderDepth.sell_orders.items())
-        active_sell_orders.sort(key = lambda x: x[0])
-
-        if active_buy_orders:
-            buyprice = active_buy_orders[0][0] + 1
-        if active_sell_orders:
-            sellprice = active_sell_orders[0][0] - 1
-
-        if buyprice == None and sellprice == None:
-            return orders
-            #if buy sell orders are empty, by the spreadsheets this never happens
-        elif buyprice == None:
-            buyprice = sellprice - minimumSpread
-        elif sellprice == None:
-            sellprice = buyprice + minimumSpread
-        else:
-            buyweight = 0
-            sellweight = 0
-            while sellprice - buyprice < minimumSpread:
-                buyweight += orderDepth.buy_orders.get(buyprice - 1, 0)
-                sellweight -= orderDepth.sell_orders.get(sellprice + 1, 0)
-                if buyweight > sellweight:
-                    buyprice -= 1
-                else:
-                    sellprice += 1
-
-        # if currentPosition > hedgelimit: 
-        #     orders.append(Order("STARFRUIT", sellprice, -currentPosition))
-        #     return orders
-        # elif currentPosition < -hedgelimit:
-        #     orders.append(Order("STARFRUIT", buyprice, -currentPosition))
-        #     return orders
+        if calculatedPrice != None:
+            buyprice = round(calculatedPrice - 4)
+            sellprice = round(calculatedPrice + 4)
+            position = 20-buyLimit
+            orders.append(Order("STARFRUIT", buyprice, buyLimit))
+            orders.append(Order("STARFRUIT", sellprice, -sellLimit))
+            # if position > hedgelimit: 
+            #     orders.append(Order("STARFRUIT", sellprice, -min(abs(position), sellLimit)))
+            #     return orders
+            # elif position < -hedgelimit:
+            #     orders.append(Order("STARFRUIT", buyprice, min(abs(position),buyLimit)))
+            #     return orders
+            # else:
+            #     orders.append(Order("STARFRUIT", buyprice, buyLimit))
+            #     orders.append(Order("STARFRUIT", sellprice, -sellLimit))
+                              
 
         # if calculatedPrice != None:
         #     buyLimit, sellLimit = self.arbitrageOrders(orders, "STARFRUIT", calculatedPrice, priceCushion, active_buy_orders, active_sell_orders, buyLimit, sellLimit)
 
-        position = 20-buyLimit
-        if position > hedgelimit: 
-            orders.append(Order("STARFRUIT", sellprice, -min(abs(position), sellLimit)))
-            return orders
-        elif position < -hedgelimit:
-            orders.append(Order("STARFRUIT", buyprice, min(abs(position),buyLimit)))
-            return orders
-        elif sellprice - buyprice > minimumSpread:
-            orders.append(Order("STARFRUIT", buyprice, buyLimit))
-            orders.append(Order("STARFRUIT", sellprice, -sellLimit))
-        return orders
+        # position = 20-buyLimit
+        # if position > hedgelimit: 
+        #     orders.append(Order("STARFRUIT", sellprice, -min(abs(position), sellLimit)))
+        #     return orders
+        # elif position < -hedgelimit:
+        #     orders.append(Order("STARFRUIT", buyprice, min(abs(position),buyLimit)))
+        #     return orders
+        # elif sellprice - buyprice > minimumSpread:
+        #     orders.append(Order("STARFRUIT", buyprice, buyLimit))
+        #     orders.append(Order("STARFRUIT", sellprice, -sellLimit))
+        return orders, calculatedPrice
