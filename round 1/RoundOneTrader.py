@@ -21,8 +21,13 @@ class Trader:
         traderData = "Knowledge for the future" #delivered as TradeingState.traderdata
         return tradeOrders, 0, traderData
     
-    def arbitrageOrders(self, orders, product, truePrice, priceCushion, active_buy_orders, active_sell_orders, buyLimit, sellLimit):
+    def arbitrageOrders(self, orders, orderDepth, product, truePrice, priceCushion, buyLimit, sellLimit):
         #to create arbitrage orders when we know a price buy looking at order book, need sorted orderbook
+        active_buy_orders = list(orderDepth.buy_orders.items())
+        active_buy_orders.sort(key = lambda x: x[0], reverse = True)
+        active_sell_orders = list(orderDepth.sell_orders.items())
+        active_sell_orders.sort(key = lambda x: x[0], reverse = False)
+        
         for price, quantity in active_buy_orders:
             if price > truePrice + priceCushion:
                 if quantity < sellLimit:
@@ -55,11 +60,7 @@ class Trader:
         neutralPrice = 10000
         orders: List[Order] = []
 
-        active_buy_orders = list(orderDepth.buy_orders.items())
-        active_buy_orders.sort(key = lambda x: x[0], reverse = True)
-        active_sell_orders = list(orderDepth.sell_orders.items())
-        active_sell_orders.sort(key = lambda x: x[0], reverse = False)
-        buyLimit, sellLimit = self.arbitrageOrders(orders, "AMETHYSTS", neutralPrice, 0, active_buy_orders, active_sell_orders, buyLimit, sellLimit)
+        buyLimit, sellLimit = self.arbitrageOrders(orders, orderDepth, "AMETHYSTS", neutralPrice, 0, buyLimit, sellLimit)
 
         #market making
         orders.append(Order("AMETHYSTS", neutralPrice - 3, buyLimit))
