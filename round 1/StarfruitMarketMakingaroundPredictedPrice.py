@@ -1,7 +1,6 @@
 from datamodel import OrderDepth, UserId, TradingState, Order
 from typing import List
-import string
-import numpy as np
+import jsonpickle
 #import math
 
 class Trader:
@@ -9,17 +8,21 @@ class Trader:
     def run(self, state: TradingState):
         #takes in a trading state, outputs list of orders to send
         tradeOrders = {}
-        starfruitTradesString = state.traderData
+        if state.traderData == "":
+            traderdata = {}
+        else:
+            traderdata = jsonpickle.decode(state.traderData)
+
         for product in state.order_depths:
             match product:
                 #case "AMETHYSTS":
                 #    tradeOrders[product] = self.amethystsTrader(state.order_depths[product], state.position.get(product, 0))
 
                 case "STARFRUIT":
-                    tradeOrders[product], starfruitTradesString = self.starFruitTrader(state.order_depths[product], state.position.get(product, 0), state.market_trades.get(product, []), state.timestamp, starfruitTradesString)
+                    tradeOrders[product], traderdata["STARFRUIT"] = self.starFruitTrader(state.order_depths[product], state.position.get(product, 0), state.market_trades.get(product, []), state.timestamp, traderdata.get("STARFRUIT", []))
 
-        traderData = starfruitTradesString #string(starfruitprice) #delivered as TradeingState.traderdata
-        return tradeOrders, 0, traderData
+        traderDataJson = jsonpickle.encode(traderdata) #string(starfruitprice) #delivered as TradeingState.traderdata
+        return tradeOrders, 0, traderDataJson
     
     def arbitrageOrders(self, orders, orderDepth, product, truePrice, priceCushion, buyLimit, sellLimit):
         #to create arbitrage orders when we know a price buy looking at order book, need sorted orderbook
@@ -67,28 +70,7 @@ class Trader:
         orders.append(Order("AMETHYSTS", neutralPrice + 3, -sellLimit))
         return orders
 
-    def stringtoTradeList(self, tradesstring):
-        #time, price, quanitity
-        if tradesstring == "":
-            return []
-        tradeList = []
-        separatedtrades = tradesstring.split(",")
-        for trade in separatedtrades:
-            tradeList.append([int(x) for x in trade.split("-")])
-        return tradeList
-
-    def tradeListtoString(self, tradeslist):
-        #time, price, quanittiy
-        if not tradeslist:
-            return ""
-        finalstring = ""
-        stringtrades = []
-        for trade in tradeslist:
-            stringtrades.append("-".join(str(x) for x in trade))
-        finalstring = ",".join(stringtrades)
-        return finalstring
-
-    def starFruitTrader(self, orderDepth, currentPosition, marketTrades, currentTime, oldtradesstring):
+    def starFruitTrader(self, orderDepth, currentPosition, marketTrades, currentTime, oldtrades):
         #we can also try tracking previous price or try looking at previou trades
         positionLimit = 20
         buyLimit = positionLimit - currentPosition
@@ -96,12 +78,13 @@ class Trader:
         Spread = 4
         movingAverageTimeLimit = 10000
         orders: List[Order] = []
-
-        print(oldtradesstring)
-        starfruitTrades = self.stringtoTradeList(oldtradesstring)
-        starfruitTrades = []
+        print(oldtrades)
+        starfruitTrades = oldtrades     #list of timestamp, price, quanitty for each trade
         for trade in marketTrades:
-            starfruitTrades.append([trade.timestamp, int(trade.price), trade.quantity])
+            if trade.timestamp == currentTime:
+                starfruitTrades.append([trade.timestamp, trade.price, trade.quantity])
+        recentTrades = [trade for trade in starfruitTrades if trade[0] > currentTime - movingAverageTimeLimit]
+        starfruitTrades = recentTrades
 
         print(starfruitTrades)
         # calculatedPrice = None
@@ -113,8 +96,6 @@ class Trader:
         #         totalpricequantity += trade[1] * trade[2]
         #     calculatedPrice = totalpricequantity/totalquantity
 
-        starfruitTradesString = self.tradeListtoString(starfruitTrades)
-
         # if calculatedPrice != None:
         #     buyprice = round(calculatedPrice - Spread)
         #     sellprice = round(calculatedPrice + Spread)
@@ -124,4 +105,4 @@ class Trader:
         # if calculatedPrice != None:
         #     buyLimit, sellLimit = self.arbitrageOrders(orders, "STARFRUIT", calculatedPrice, priceCushion, active_buy_orders, active_sell_orders, buyLimit, sellLimit)
 
-        return orders, starfruitTradesString
+        return orders, starfruitTrades
