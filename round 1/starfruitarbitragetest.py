@@ -21,7 +21,7 @@ class Trader:
                 #    tradeOrders[product] = self.amethystsTrader(state.order_depths[product], state.position.get(product, 0))
 
                 case "STARFRUIT":
-                    tradeOrders[product], traderdata["STARFRUIT"] = self.starFruitTrader(state.order_depths[product], state.position.get(product, 0), state.market_trades.get(product, []), state.timestamp, traderdata.get("STARFRUIT", []))
+                    tradeOrders[product], traderdata["STARFRUIT"] = self.starFruitTrader(state.order_depths[product], state.position.get(product, 0), state.market_trades.get(product, []), state.timestamp, traderdata.get("STARFRUIT", {}))
 
         traderDataJson = encode(traderdata) #string(starfruitprice) #delivered as TradeingState.traderdata
         return tradeOrders, 0, traderDataJson
@@ -72,46 +72,60 @@ class Trader:
         orders.append(Order("AMETHYSTS", neutralPrice + 3, -sellLimit))
         return orders
 
-    def starFruitTrader(self, orderDepth, currentPosition, marketTrades, currentTime, oldtrades):
+    def starFruitTrader(self, orderDepth, currentPosition, marketTrades, currentTime, oldstarfruitData):
         #we can also try tracking previous price or try looking at previou trades
         positionLimit = 20
         buyLimit = positionLimit - currentPosition
         sellLimit = positionLimit + currentPosition
-        hedgelimit = 2
-        spreadMultiplier = 1
-        priceCushion = 2
-        movingAverageTimeLimit = 20000
+        nextTime = currentTime + 100
+        dataTimeLimit = 1500
+        priceCushion = 0
         orders: List[Order] = []
+        undercut = .5
 
-        starfruitTrades = oldtrades     #list of timestamp, price, quanitty for each trade
-        for trade in marketTrades:
-            if trade.timestamp == currentTime:
-                starfruitTrades.append([trade.timestamp, trade.price, trade.quantity])
-        recentTrades = [trade for trade in starfruitTrades if trade[0] > currentTime - movingAverageTimeLimit]
-        starfruitTrades = recentTrades
+        if oldstarfruitData == {}:
+            starfruitData = {}
+            starfruitData["buyorders"] = []     #time, price
+            starfruitData["sellorders"] = []
+        else:
+            starfruitData = oldstarfruitData
 
-        calculatedPrice = None
-        if len(starfruitTrades) >= 2:
-            x = [time for trade in starfruitTrades for time in [trade[0]]*trade[2]]
-            y = [price for trade in starfruitTrades for price in [trade[1]]*trade[2]]
+        active_buy_orders = list(orderDepth.buy_orders.items())
+        active_buy_orders.sort(key = lambda x: x[0], reverse = True)
+        buyorders = [order for order in starfruitData["buyorders"] if order[0] > currentTime - dataTimeLimit]
+        if active_buy_orders:
+            buyorders.append((currentTime, active_buy_orders[0][0]))
+
+        active_sell_orders = list(orderDepth.sell_orders.items())
+        active_sell_orders.sort(key = lambda x: x[0], reverse = False)
+        sellorders = [order for order in starfruitData["sellorders"] if order[0] > currentTime - dataTimeLimit]
+        if active_sell_orders:
+            sellorders.append((currentTime, active_sell_orders[0][0]))
+
+        predictedBuyOrder = None
+        predictedSellOrder = None
+        if len(buyorders) >= 5:
+            x = [x[0] for x in buyorders]
+            y = [x[1] for x in buyorders]
             slope, intercept = linear_regression(x, y)
-            calculatedPrice = slope * currentTime + intercept
-            differences = [price - (slope * time + intercept) for time, price in zip(x,y)]
-            spread = stdev(differences) * spreadMultiplier
+            predictedBuyOrder = slope * nextTime + intercept
+        if len(sellorders) >= 5:
+            x = [x[0] for x in sellorders]
+            y = [x[1] for x in sellorders]
+            slope, intercept = linear_regression(x, y)
+            predictedSellOrder = slope * nextTime + intercept
+        
 
+        if predictedBuyOrder != None and predictedSellOrder != None:
+            buyprice = round(predictedBuyOrder + undercut)
+            sellprice = round(predictedSellOrder - undercut)
+            calculatedPrice = (buyprice + sellprice)/2
 
-        if calculatedPrice != None:
-            buyprice = round(calculatedPrice - spread)
-            sellprice = round(calculatedPrice + spread)
-            if currentPosition > hedgelimit: 
-                orders.append(Order("STARFRUIT", sellprice, -currentPosition))
-            elif currentPosition < -hedgelimit:
-                orders.append(Order("STARFRUIT", buyprice, -currentPosition))
-            else:
-                orders.append(Order("STARFRUIT", buyprice, buyLimit))
-                orders.append(Order("STARFRUIT", sellprice, -sellLimit))
+            buyLimit, sellLimit = self.arbitrageOrders(orders, orderDepth, "STARFRUIT", calculatedPrice, priceCushion, buyLimit, sellLimit)
 
-        # if calculatedPrice != None:
-        #     buyLimit, sellLimit = self.arbitrageOrders(orders, orderDepth, "STARFRUIT", calculatedPrice, priceCushion, buyLimit, sellLimit)
+            orders.append(Order("STARFRUIT", buyprice, buyLimit))
+            orders.append(Order("STARFRUIT", sellprice, -sellLimit))
 
-        return orders, starfruitTrades
+        starfruitData["sellorders"] = sellorders
+        starfruitData["buyorders"] = buyorders
+        return orders, starfruitData
