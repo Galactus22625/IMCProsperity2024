@@ -75,10 +75,12 @@ class Trader:
         positionLimit = 20
         buyLimit = positionLimit - currentPosition
         sellLimit = positionLimit + currentPosition
-        Spread = 4
-        movingAverageTimeLimit = 10000
+        hedgelimit = 20
+        Spread = 5
+        priceCushion = 2
+        movingAverageTimeLimit = 20000
         orders: List[Order] = []
-        print(oldtrades)
+
         starfruitTrades = oldtrades     #list of timestamp, price, quanitty for each trade
         for trade in marketTrades:
             if trade.timestamp == currentTime:
@@ -86,23 +88,27 @@ class Trader:
         recentTrades = [trade for trade in starfruitTrades if trade[0] > currentTime - movingAverageTimeLimit]
         starfruitTrades = recentTrades
 
-        print(starfruitTrades)
-        # calculatedPrice = None
-        # totalquantity = 0
-        # totalpricequantity = 0
-        # if starfruitTrades:
-        #     for trade in starfruitTrades:
-        #         totalquantity += trade[2]
-        #         totalpricequantity += trade[1] * trade[2]
-        #     calculatedPrice = totalpricequantity/totalquantity
+        calculatedPrice = None
+        totalquantity = 0
+        totalpricequantity = 0
+        if starfruitTrades:
+            for trade in starfruitTrades:
+                totalquantity += trade[2]
+                totalpricequantity += trade[1] * trade[2]
+            calculatedPrice = totalpricequantity/totalquantity
+
+        if calculatedPrice != None:
+            buyprice = round(calculatedPrice - Spread)
+            sellprice = round(calculatedPrice + Spread)
+            if currentPosition > hedgelimit: 
+                orders.append(Order("STARFRUIT", sellprice, -currentPosition))
+            elif currentPosition < -hedgelimit:
+                orders.append(Order("STARFRUIT", buyprice, -currentPosition))
+            else:
+                orders.append(Order("STARFRUIT", buyprice, buyLimit))
+                orders.append(Order("STARFRUIT", sellprice, -sellLimit))
 
         # if calculatedPrice != None:
-        #     buyprice = round(calculatedPrice - Spread)
-        #     sellprice = round(calculatedPrice + Spread)
-        #     orders.append(Order("STARFRUIT", buyprice, buyLimit))
-        #     orders.append(Order("STARFRUIT", sellprice, -sellLimit))
-
-        # if calculatedPrice != None:
-        #     buyLimit, sellLimit = self.arbitrageOrders(orders, "STARFRUIT", calculatedPrice, priceCushion, active_buy_orders, active_sell_orders, buyLimit, sellLimit)
+        #     buyLimit, sellLimit = self.arbitrageOrders(orders, orderDepth, "STARFRUIT", calculatedPrice, priceCushion, buyLimit, sellLimit)
 
         return orders, starfruitTrades
