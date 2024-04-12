@@ -79,7 +79,6 @@ class Trader:
         sellLimit = positionLimit + currentPosition
         nextTime = currentTime + 100
         dataTimeLimit = 1500
-        priceCushion = 1.5
         orders: List[Order] = []
         undercut = .5
 

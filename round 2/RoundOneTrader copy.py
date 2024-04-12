@@ -17,11 +17,11 @@ class Trader:
 
         for product in state.order_depths:
             match product:
-                #case "AMETHYSTS":
-                #    tradeOrders[product] = self.amethystsTrader(state.order_depths[product], state.position.get(product, 0))
+                case "AMETHYSTS":
+                    tradeOrders[product] = self.amethystsTrader(state.order_depths[product], state.position.get(product, 0))
 
                 case "STARFRUIT":
-                    tradeOrders[product], traderdata["STARFRUIT"] = self.starFruitTrader(state.order_depths[product], state.position.get(product, 0), state.market_trades.get(product, []), state.timestamp, traderdata.get("STARFRUIT", {}))
+                    tradeOrders[product], traderdata["STARFRUIT"] = self.starFruitTrader(state.order_depths[product], state.position.get(product, 0), state.timestamp, traderdata.get("STARFRUIT", {}))
 
         traderDataJson = encode(traderdata) #string(starfruitprice) #delivered as TradeingState.traderdata
         return tradeOrders, 0, traderDataJson
@@ -72,14 +72,13 @@ class Trader:
         orders.append(Order("AMETHYSTS", neutralPrice + 3, -sellLimit))
         return orders
 
-    def starFruitTrader(self, orderDepth, currentPosition, marketTrades, currentTime, oldstarfruitData):
+    def starFruitTrader(self, orderDepth, currentPosition, currentTime, oldstarfruitData):
         #we can also try tracking previous price or try looking at previou trades
         positionLimit = 20
         buyLimit = positionLimit - currentPosition
         sellLimit = positionLimit + currentPosition
         nextTime = currentTime + 100
         dataTimeLimit = 1500
-        priceCushion = 0
         orders: List[Order] = []
         undercut = .5
 
@@ -119,10 +118,6 @@ class Trader:
         if predictedBuyOrder != None and predictedSellOrder != None:
             buyprice = round(predictedBuyOrder + undercut)
             sellprice = round(predictedSellOrder - undercut)
-            calculatedPrice = (buyprice + sellprice)/2
-
-            buyLimit, sellLimit = self.arbitrageOrders(orders, orderDepth, "STARFRUIT", calculatedPrice, priceCushion, buyLimit, sellLimit)
-
             orders.append(Order("STARFRUIT", buyprice, buyLimit))
             orders.append(Order("STARFRUIT", sellprice, -sellLimit))
 
