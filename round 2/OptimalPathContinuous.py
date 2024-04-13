@@ -1,4 +1,6 @@
 from copy import deepcopy
+
+
 class Currency:
     def __init__(self, pizzarate, wasabirate, snowballrate, shellrate, total = None):
         self.pizzarate = pizzarate
@@ -37,7 +39,7 @@ class Path:
     
     def evaluatePath(self):
         if self.path[-1].type == "Shells":
-            return self.path[-1].total
+            return self.path[-1].total - 2000000
         else:
             return 0
 
@@ -69,7 +71,7 @@ class Path:
         
         return newpaths
     
-DFS = [Path([Shells(1)])]
+DFS = [Path([Shells(2000000)])]
 bestpath = None
 bestprofit = 1
 while DFS:
@@ -77,7 +79,7 @@ while DFS:
     if currentpath.evaluatePath() != 0:
         print(currentpath.pathString())
         print(currentpath.evaluatePath())
-    if currentpath.evaluatePath() > bestprofit:
+    if currentpath.evaluatePath() >= bestprofit:
         bestprofit = currentpath.evaluatePath()
         bestpath = currentpath.pathString()
     DFS = DFS + currentpath.nextStep()

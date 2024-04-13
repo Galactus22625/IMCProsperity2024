@@ -17,15 +17,25 @@ class Trader:
 
         for product in state.order_depths:
             match product:
-                case "AMETHYSTS":
-                    tradeOrders[product] = self.amethystsTrader(state.order_depths[product], state.position.get(product, 0))
+                #case "AMETHYSTS":
+                #    tradeOrders[product] = self.amethystsTrader(state.order_depths[product], state.position.get(product, 0))
 
-                case "STARFRUIT":
-                    tradeOrders[product], traderdata["STARFRUIT"] = self.starFruitTrader(state.order_depths[product], state.position.get(product, 0), state.timestamp, traderdata.get("STARFRUIT", {}))
+                #case "STARFRUIT":
+                #    tradeOrders[product], traderdata["STARFRUIT"] = self.starFruitTrader(state.order_depths[product], state.position.get(product, 0), state.timestamp, traderdata.get("STARFRUIT", {}))
+
+                case "ORCHIDS":
+                    print(f"buy orderbook: {state.order_depths.get(product).buy_orders.keys()}")
+                    print(f"sell orderbook: {state.order_depths.get(product).sell_orders.keys()}")
+                    print(f"Observations: {state.observations}")
+                    tradeOrders[product], traderdata["ORCHIDS"] = self.orchidTrader()
 
         traderDataJson = encode(traderdata) #string(starfruitprice) #delivered as TradeingState.traderdata
         return tradeOrders, 0, traderDataJson
     
+    def orchidTrader(self):
+
+        return [], ""
+
     def arbitrageOrders(self, orders, orderDepth, product, truePrice, priceCushion, buyLimit, sellLimit):
         #to create arbitrage orders when we know a price buy looking at order book, need sorted orderbook
         active_buy_orders = list(orderDepth.buy_orders.items())
@@ -103,7 +113,7 @@ class Trader:
 
         predictedBuyOrder = None
         predictedSellOrder = None
-        if len(buyorders) >= 5:
+        if len(buyorders) >= 2:
             x = [x[0] for x in buyorders]
             y = [x[1] for x in buyorders]
             slope, intercept = linear_regression(x, y)
