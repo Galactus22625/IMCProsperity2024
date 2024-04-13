@@ -17,11 +17,11 @@ class Trader:
 
         for product in state.order_depths:
             match product:
-                #case "AMETHYSTS":
-                #    tradeOrders[product] = self.amethystsTrader(state.order_depths[product], state.position.get(product, 0))
+                case "AMETHYSTS":
+                   tradeOrders[product] = self.amethystsTrader(state.order_depths[product], state.position.get(product, 0))
 
-                #case "STARFRUIT":
-                #    tradeOrders[product], traderdata["STARFRUIT"] = self.starFruitTrader(state.order_depths[product], state.position.get(product, 0), state.timestamp, traderdata.get("STARFRUIT", {}))
+                case "STARFRUIT":
+                   tradeOrders[product], traderdata["STARFRUIT"] = self.starFruitTrader(state.order_depths[product], state.position.get(product, 0), state.timestamp, traderdata.get("STARFRUIT", {}))
 
                 case "ORCHIDS":
                     tradeOrders[product], conversions, traderdata["ORCHIDS"] = self.orchidTrader(state.order_depths[product], state.observations.conversionObservations[product], state.position.get(product,0), traderdata.get("ORCHIDS", {}), state.timestamp)
@@ -61,10 +61,10 @@ class Trader:
                 long = True
             elif slope < .5:
                 short = True
-
+        #only if can reliably predict price movement
         #if long position or short position, hold onto orchids
         #if island arbitrage is true, ignore and do that
-
+        
         #either long position, short position, or none
         active_buy_orders = list(orderDepth.buy_orders.items())
         active_buy_orders.sort(key = lambda x: x[0], reverse = True)
