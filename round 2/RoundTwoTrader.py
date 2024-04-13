@@ -27,14 +27,42 @@ class Trader:
                     print(f"buy orderbook: {state.order_depths.get(product).buy_orders.keys()}")
                     print(f"sell orderbook: {state.order_depths.get(product).sell_orders.keys()}")
                     print(f"Observations: {state.observations}")
-                    tradeOrders[product], traderdata["ORCHIDS"] = self.orchidTrader()
+                    tradeOrders[product], conversions, traderdata["ORCHIDS"] = self.orchidTrader(state.order_depths[product], state.observations, state.position.get(product,0))
 
         traderDataJson = encode(traderdata) #string(starfruitprice) #delivered as TradeingState.traderdata
-        return tradeOrders, 0, traderDataJson
+        return tradeOrders, conversions, traderDataJson
     
-    def orchidTrader(self):
+    def orchidTrader(self, orderDepth, observations, position):
+        southbuy = observations.bidPrice
+        southsell = observations.askPrice
+        southprice = (southbuy + southsell) /2
+        costtobuyfromsouth = southsell + observations.importTariff + observations.transportFees
+        profittoselltosouth = southsell - observations.exportTariff - observations.transportFees
+        orders: List[Order] = []
+        positionLimit = 100
+        buyLimit = positionLimit - position
+        sellLimit = positionLimit + position
 
-        return [], ""
+        #either long position, short position, or none
+        active_buy_orders = list(orderDepth.buy_orders.items())
+        active_buy_orders.sort(key = lambda x: x[0], reverse = True)
+        active_sell_orders = list(orderDepth.sell_orders.items())
+        active_sell_orders.sort(key = lambda x: x[0], reverse = False)
+
+        long = False
+        short = False
+        none = False
+        for price in active_buy_orders:
+            if costtobuyfromsouth < price:
+                orders.append(Order, price, -min(sellLimit, abs(orderDepth.buy_orders[price])))
+                sellLimit -= min(sellLimit, abs(orderDepth.buy_orders[price]))
+        for price in active_sell_orders:
+            if profittoselltosouth > price:
+                orders.append(Order, price, min(buyLimit, abs(orderDepth.sell_orders[price])))
+                buyLimit -= min(sellLimit, abs(orderDepth.sell_orders[price]))
+
+        convert = abs(position)
+        return orders, convert, ""
 
     def arbitrageOrders(self, orders, orderDepth, product, truePrice, priceCushion, buyLimit, sellLimit):
         #to create arbitrage orders when we know a price buy looking at order book, need sorted orderbook
