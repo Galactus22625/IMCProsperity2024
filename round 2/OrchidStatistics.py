@@ -38,11 +38,11 @@ def processround2data(filename):
         sunlightproductiondecrease.append(currentproduction)
     print(f"sunlight decrase for day: {currentproduction}")
 
-processround2data("round 2/round-2-island-data-bottle/prices_round_2_day_-1.csv")
+#processround2data("round 2/round-2-island-data-bottle/prices_round_2_day_-1.csv")
 
 #processround2data("round 2/round-2-island-data-bottle/prices_round_2_day_0.csv")
 
-#processround2data("round 2/round-2-island-data-bottle/prices_round_2_day_1.csv")
+processround2data("round 2/round-2-island-data-bottle/prices_round_2_day_1.csv")
 
 print(min(sunlight))
 print(max(sunlight))
@@ -58,9 +58,15 @@ print(statistics.correlation(orchidPrice, transportFees))
 print(statistics.correlation(orchidPrice, exportTariff))
 print(statistics.correlation(orchidPrice, importTariff))
 print(statistics.correlation(orchidPrice, sunlight))
-print(statistics.correlation(orchidPrice, humidity))
 print(statistics.correlation(orchidPrice, sunlightproductiondecrease))
+print(statistics.correlation(orchidPrice, humidity))
 print(statistics.correlation(orchidPrice, humidityproductiondecrease))
-
+laterprices = orchidPrice[80::]
+delayhumidity = humidity[0:-80]
+delayhumditiyproductiondecrease = humidityproductiondecrease[0:-80]
+print(len(laterprices))
+print(len(delayhumidity))
+print(statistics.correlation(laterprices, delayhumidity))
+print(statistics.correlation(laterprices, delayhumditiyproductiondecrease))
 
 

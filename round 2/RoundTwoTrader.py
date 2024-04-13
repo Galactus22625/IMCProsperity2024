@@ -24,15 +24,12 @@ class Trader:
                 #    tradeOrders[product], traderdata["STARFRUIT"] = self.starFruitTrader(state.order_depths[product], state.position.get(product, 0), state.timestamp, traderdata.get("STARFRUIT", {}))
 
                 case "ORCHIDS":
-                    print(f"buy orderbook: {state.order_depths.get(product).buy_orders.keys()}")
-                    print(f"sell orderbook: {state.order_depths.get(product).sell_orders.keys()}")
-                    print(f"Observations: {state.observations}")
-                    tradeOrders[product], conversions, traderdata["ORCHIDS"] = self.orchidTrader(state.order_depths[product], state.observations, state.position.get(product,0))
+                    tradeOrders[product], conversions, traderdata["ORCHIDS"] = self.orchidTrader(state.order_depths[product], state.observations.conversionObservations[product], state.position.get(product,0), traderdata.get("ORCHIDS", {}), state.timestamp)
 
         traderDataJson = encode(traderdata) #string(starfruitprice) #delivered as TradeingState.traderdata
         return tradeOrders, conversions, traderDataJson
     
-    def orchidTrader(self, orderDepth, observations, position):
+    def orchidTrader(self, orderDepth, observations, position, orchidData, currenttime):
         southbuy = observations.bidPrice
         southsell = observations.askPrice
         southprice = (southbuy + southsell) /2
@@ -42,6 +39,31 @@ class Trader:
         positionLimit = 100
         buyLimit = positionLimit - position
         sellLimit = positionLimit + position
+        holdposition = 50
+        regressiontimelimit = 30
+
+
+        long = False
+        short = False
+        if orchidData:
+            oldprices = orchidData["prices"]
+        else:
+            oldprices = []
+        oldprices.append([southprice, currenttime])
+        if len(oldprices) > 30:
+            oldprices.pop(0)
+        if len(oldprices) > 10:
+            x = [y[1] for y in oldprices]
+            y = [x[0] for x in oldprices]
+            slope, intercept = linear_regression(x, y)
+            print(slope)
+            if slope > .5:
+                long = True
+            elif slope < .5:
+                short = True
+
+        #if long position or short position, hold onto orchids
+        #if island arbitrage is true, ignore and do that
 
         #either long position, short position, or none
         active_buy_orders = list(orderDepth.buy_orders.items())
@@ -49,20 +71,26 @@ class Trader:
         active_sell_orders = list(orderDepth.sell_orders.items())
         active_sell_orders.sort(key = lambda x: x[0], reverse = False)
 
-        long = False
-        short = False
-        none = False
-        for price in active_buy_orders:
+        islandarbitrage = False
+        #if both arbitrages work, figure out which is more profitable
+        for price, quantity in active_buy_orders:
             if costtobuyfromsouth < price:
-                orders.append(Order, price, -min(sellLimit, abs(orderDepth.buy_orders[price])))
-                sellLimit -= min(sellLimit, abs(orderDepth.buy_orders[price]))
-        for price in active_sell_orders:
+                islandarbitrage = True
+                orders.append(Order("ORCHIDS", price, -min(sellLimit, quantity)))
+                sellLimit -= min(sellLimit, abs(quantity))
+        for price, quantity in active_sell_orders:
             if profittoselltosouth > price:
-                orders.append(Order, price, min(buyLimit, abs(orderDepth.sell_orders[price])))
-                buyLimit -= min(sellLimit, abs(orderDepth.sell_orders[price]))
+                islandarbitrage = True
+                orders.append(Order("ORCHIDS", price, min(buyLimit, abs(quantity))))
+                buyLimit -= min(sellLimit, abs(quantity))
+        if islandarbitrage == True:
+            convert = abs(position)
+        else:
+            #convert = 0
+            convert = abs(position)
 
-        convert = abs(position)
-        return orders, convert, ""
+        orchiddata = {"prices": oldprices}
+        return orders, convert, orchiddata
 
     def arbitrageOrders(self, orders, orderDepth, product, truePrice, priceCushion, buyLimit, sellLimit):
         #to create arbitrage orders when we know a price buy looking at order book, need sorted orderbook
