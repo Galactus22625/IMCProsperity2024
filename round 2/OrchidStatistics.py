@@ -44,8 +44,7 @@ def processround2data(filename):
 
 processround2data("round 2/round-2-island-data-bottle/prices_round_2_day_1.csv")
 
-print(min(sunlight))
-print(max(sunlight))
+changeinorchid = [orchidPrice[x] - orchidPrice[x-1] for x in range(1, len(orchidPrice))]
 currentproduction = 100
 for humid in humidity:
     productiondecrease = 100
@@ -54,19 +53,31 @@ for humid in humidity:
     if humid > 80:
         productiondecrease = 100*(.98**((humid-80) /5 ))
     humidityproductiondecrease.append(productiondecrease)
-print(statistics.correlation(orchidPrice, transportFees))
-print(statistics.correlation(orchidPrice, exportTariff))
-print(statistics.correlation(orchidPrice, importTariff))
-print(statistics.correlation(orchidPrice, sunlight))
-print(statistics.correlation(orchidPrice, sunlightproductiondecrease))
-print(statistics.correlation(orchidPrice, humidity))
-print(statistics.correlation(orchidPrice, humidityproductiondecrease))
-laterprices = orchidPrice[80::]
-delayhumidity = humidity[0:-80]
-delayhumditiyproductiondecrease = humidityproductiondecrease[0:-80]
-print(len(laterprices))
-print(len(delayhumidity))
-print(statistics.correlation(laterprices, delayhumidity))
-print(statistics.correlation(laterprices, delayhumditiyproductiondecrease))
+
+humidity.pop()
+sunlight.pop()
+sunlightproductiondecrease.pop()
+humidityproductiondecrease.pop()
+##instanateoussulightproductiondecrease.pop()
+print(statistics.correlation(changeinorchid, sunlight))
+print(statistics.correlation(changeinorchid, sunlightproductiondecrease))
+#print(statistics.correlation(changeinorchid, instanateoussulightproductiondecreaseß))
+print(statistics.correlation(changeinorchid, humidity))
+print(statistics.correlation(changeinorchid, humidityproductiondecrease))
+
+# print(statistics.correlation(orchidPrice, transportFees))
+# print(statistics.correlation(orchidPrice, exportTariff))
+# print(statistics.correlation(orchidPrice, importTariff))
+# print(statistics.correlation(orchidPrice, sunlight))
+# print(statistics.correlation(orchidPrice, sunlightproductiondecrease))
+# print(statistics.correlation(orchidPrice, humidity))
+# print(statistics.correlation(orchidPrice, humidityproductiondecrease))
+# laterprices = orchidPrice[80::]
+# delayhumidity = humidity[0:-80]
+# delayhumditiyproductiondecrease = humidityproductiondecrease[0:-80]
+# print(len(laterprices))
+# print(len(delayhumidity))
+# print(statistics.correlation(laterprices, delayhumidity))
+# print(statistics.correlation(laterprices, delayhumditiyproductiondecrease))
 
 
