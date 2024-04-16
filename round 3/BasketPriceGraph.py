@@ -18,17 +18,17 @@ class Trader:
         conversions = 0     #for testing when orchids is 
         for product in state.order_depths:
             match product:
-                case "AMETHYSTS":
-                   tradeOrders[product] = self.amethystsTrader(state.order_depths[product], state.position.get(product, 0))
+                # case "AMETHYSTS":
+                #    tradeOrders[product] = self.amethystsTrader(state.order_depths[product], state.position.get(product, 0))
 
-                case "STARFRUIT":
-                   tradeOrders[product], traderdata["STARFRUIT"] = self.starFruitTrader(state.order_depths[product], state.position.get(product, 0), state.timestamp, traderdata.get("STARFRUIT", {}))
+                # case "STARFRUIT":
+                #    tradeOrders[product], traderdata["STARFRUIT"] = self.starFruitTrader(state.order_depths[product], state.position.get(product, 0), state.timestamp, traderdata.get("STARFRUIT", {}))
 
-                case "ORCHIDS":
-                    tradeOrders[product], conversions, traderdata["ORCHIDS"] = self.orchidTrader(state.observations.conversionObservations[product], state.position.get(product,0), traderdata.get("ORCHIDS", {"traded": [0], "markup": 1.5}))
+                # case "ORCHIDS":
+                #     tradeOrders[product], conversions, traderdata["ORCHIDS"] = self.orchidTrader(state.observations.conversionObservations[product], state.position.get(product,0), traderdata.get("ORCHIDS", {"traded": [0], "markup": 1.5}))
 
                 case "GIFT_BASKET":
-                    tradeOrders[product], tradeOrders["STRAWBERRIES"], tradeOrders["CHOCOLATE"], tradeOrders["ROSES"] = self.basketTrader(state.order_depths[product], state.order_depths["STRAWBERRIES"], state.order_depths["CHOCOLATE"], state.order_depths["ROSES"], state.position)
+                    tradeOrders[product], traderdata["GIFT_BASKET"] = self.basketTrader(state.order_depths[product], state.order_depths["STRAWBERRIES"], state.order_depths["CHOCOLATE"], state.order_depths["ROSES"], state.position.get(product, 0), traderdata.get("GIFT_BASKET", {"oldmarkup": 380}))
 
 
         traderDataJson = encode(traderdata) #string(starfruitprice) #delivered as TradeingState.traderdata
@@ -42,47 +42,37 @@ class Trader:
         midprice = (active_buy_orders[0][0] + active_sell_orders[0][0])/2
         return midprice
     
-    def hedgeTrader(self, product, orderDepth, currentPosition, intendedPosition):
-        tradeDif = intendedPosition - currentPosition
-        orders = []
-        active_buy_orders = list(orderDepth.buy_orders.items())
-        active_buy_orders.sort(key = lambda x: x[0], reverse = False)
-        active_sell_orders = list(orderDepth.sell_orders.items())
-        active_sell_orders.sort(key = lambda x: x[0], reverse = True)
-        if tradeDif > 0:
-            orders.append(Order(product, active_sell_orders[0][0],tradeDif))
-        elif tradeDif < 0:
-            orders.append(Order(product, active_buy_orders[0][0], tradeDif))
-        return orders
-    
-    def basketTrader(self, orderDepth, strawberryOrders, chocolateOrders, roseOrders, positions):
-        currentPosition = positions.get("GIFT_BASKET", 0)
-        positionLimit = 58
+    def basketTrader(self, orderDepth, strawberryOrders, chocolateOrders, roseOrders, currentPosition, basketData):
+        positionLimit = 60
+        buyLimit = positionLimit - currentPosition
+        sellLimit = positionLimit + currentPosition
         orders: List[Order] = []
-        strawberryorders: List[Order] = []
-        chocolateorders: List[Order] = []
-        roseorders: List[Order] = []
-        basketMarkup = 395            #calculated ideal from all 3 datasets, small testset from website not same as other data
-        arbitrageLimit = 55
+        basketMarkup = basketData["oldmarkup"]
+        markupshift = 0
+        spread = 3
+        arbitrageTrigger = 10
 
+        if currentPosition == 60:
+            basketMarkup -= markupshift
+        elif currentPosition == -60:
+            basketMarkup += markupshift
         basketmidPrice = self.getMidPrice(orderDepth)
         strawberryPrice = self.getMidPrice(strawberryOrders)
         chocolatePrice = self.getMidPrice(chocolateOrders)
         rosePrice = self.getMidPrice(roseOrders)
+
         predictedBasketPrice = 6*strawberryPrice +  4*chocolatePrice + rosePrice + basketMarkup
 
-        difference = basketmidPrice-predictedBasketPrice
+        #buyLimit, sellLimit = self.arbitrageOrders(orders, orderDepth, "GIFT_BASKET", predictedBasketPrice, arbitrageTrigger, buyLimit, sellLimit)
+        
+        orders.append(Order("GIFT_BASKET", round(predictedBasketPrice +100), buyLimit))
+       #orders.append(Order("GIFT_BASKET", round(predictedBasketPrice + spread), -sellLimit))
+        print(f"GiftBasketPosition {currentPosition}")
+        print(f"basketMarkup {basketMarkup}")
 
-        if difference > arbitrageLimit:
-            orders = self.hedgeTrader("GIFT_BASKET", orderDepth, currentPosition, -positionLimit)
-        elif difference < -arbitrageLimit:
-            orders = self.hedgeTrader("GIFT_BASKET", orderDepth, currentPosition, positionLimit)
+        basketdata = {"oldmarkup": basketMarkup}
+        return orders, basketdata
 
-        # # # #hedge loses money?/ maybe cant trade because basekt derived form contents not other way around
-
-        print(f"Difference of Basket from base price prediction {difference}, GiftBasketPosition {currentPosition}")
-
-        return orders, strawberryorders, chocolateorders, roseorders
 
     def orchidTrader(self, observations, position, orchidData):
         orders: List[Order] = []
