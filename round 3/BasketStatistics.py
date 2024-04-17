@@ -23,7 +23,7 @@ def processround2data(filename, basketprices, strawberryprices, chocolateprices,
             elif line[2] == "GIFT_BASKET":
                 basketprices.append(float(line[15]))
 
-processround2data("round-3-island-data-bottle/prices_round_3_day_2.csv",basketprices, strawberryprices, chocolateprices, roseprices)
+#processround2data("round-3-island-data-bottle/prices_round_3_day_2.csv",basketprices, strawberryprices, chocolateprices, roseprices)
 
 # processround2data("round-3-island-data-bottle/prices_round_3_day_0.csv")
 
@@ -34,21 +34,21 @@ processround2data("round-3-island-data-bottle/prices_round_3_day_2.csv",basketpr
 # strawberrychange = [6*(strawberryprices[x] - strawberryprices[x-1]) for x in range(1, len(strawberryprices))]
 # chocolatechange = [chocolateprices[x] - chocolateprices[x-1] for x in range(1, len(chocolateprices))]
 
-difference = [basketprices[x] - 6*strawberryprices[x] - 4*chocolateprices[x] - roseprices[x] for x in range(1000)]
+#difference = [basketprices[x] - 6*strawberryprices[x] - 4*chocolateprices[x] - roseprices[x] for x in range(1000)]
 def estimatePNL(differences, mean, arbitragelimit):
     state = "NONE"
     totalPNL = 0
     profit = 0
     for diff in differences:
-        offset = diff - mean
+        offset = diff 
         if offset > arbitragelimit:
             if state == "LONG":
                 # profit -= basket*58 * 2
-                totalPNL += 2*(arbitragelimit-3)*58
+                totalPNL += 2*(arbitragelimit)*58
             state = "SHORT"
         if offset < -arbitragelimit:
             if state == "SHORT":
-                totalPNL += 2*(arbitragelimit-3)*58 
+                totalPNL += 2*(arbitragelimit)*58 
                 # profit+= basket*58 * 2
             state = "LONG"
     # if state == "LONG":
@@ -73,23 +73,56 @@ def printBestCombo(file1, file2, file3):
     processround2data(file1, basketprices, strawberryprices, chocolateprices, roseprices)
     processround2data(file2, basketprices2, strawberryprices2, chocolateprices2, roseprices2)
     processround2data(file3, basketprices3, strawberryprices3, chocolateprices3, roseprices3)
-    difference = [basketprices[x] - 6*strawberryprices[x] - 4*chocolateprices[x] - roseprices[x] for x in range(len(basketprices))]
-    difference2 = [basketprices2[x] - 6*strawberryprices2[x] - 4*chocolateprices2[x] - roseprices2[x] for x in range(len(basketprices2))]
-    difference3 = [basketprices3[x] - 6*strawberryprices3[x] - 4*chocolateprices3[x] - roseprices3[x] for x in range(len(basketprices3))]
+    baskets = basketprices+basketprices2+basketprices3
+    strawberry = strawberryprices+strawberryprices2+strawberryprices3
+    chocolate = chocolateprices+chocolateprices2+chocolateprices3
+    rose = roseprices+roseprices2+roseprices3
+    basketmean = statistics.mean(baskets)
+    strawberrymean = statistics.mean(strawberry)
+    chocolatemean = statistics.mean(chocolate)
+    rosemean = statistics.mean(rose)
+    print(strawberrymean/(basketmean))
+    print(chocolatemean/(basketmean ))
+    print(rosemean/(basketmean))
+    truestrawberry = [basketprices[x] * 0.05694959204415752 for x in range(len(basketprices))]     #0.05725730161380604
+    truestrawberry2 = [basketprices2[x] * 0.05694959204415752 for x in range(len(basketprices))]     #0.05725730161380604
+    truestrawberry3 = [basketprices3[x] * 0.05694959204415752 for x in range(len(basketprices))]     #0.05725730161380604
+    
+    truechocolate = [(basketprices[x] - 380) * 0.11254773547564821 for x in range(len(basketprices))]        #0.11254773547564821
+    truechocolate2 = [(basketprices2[x] - 380) * 0.11254773547564821 for x in range(len(basketprices))]        #0.11254773547564821
+    truechocolate3 = [(basketprices3[x] - 380) * 0.11254773547564821 for x in range(len(basketprices))]        #0.11254773547564821
+    truerose = [(basketprices[x] - 380) * 0.206272493194264 for x in range(len(basketprices))]       #0.206272493194264
+    truerose2 = [(basketprices2[x] - 380) * 0.206272493194264 for x in range(len(basketprices))]       #0.206272493194264
+    truerose3 = [(basketprices3[x] - 380) * 0.206272493194264 for x in range(len(basketprices))]       #0.206272493194264
+    # difference = [round(rose[x] - truerose[x]) for x in range(len(strawberry))]
+    # print(difference)
+    # print(min(difference))
+    # print(max(difference))
+    difference = [strawberryprices[x] - truestrawberry[x] for x in range(len(strawberryprices))]    # print(max(difference))
+    difference2 = [strawberryprices2[x] - truestrawberry2[x] for x in range(len(strawberryprices))]    # print(max(difference))
+    difference3 = [strawberryprices3[x] - truestrawberry3[x] for x in range(len(strawberryprices))]
     maxarb = 0
     pnl = 0
-    maxmid = 0
-    for mid in range(330, 440):
-        for arb in range(20, 150, 1):
-            newpnl = estimatePNL(difference, mid, arb)
-            newpnl += estimatePNL(difference2, mid, arb)
-            newpnl += estimatePNL(difference3, mid, arb)
-            if newpnl > pnl:
-                maxmid = mid
-                pnl = newpnl
-                maxarb = arb
+
+
+    basketdif = [basketprices[x] - 6*strawberryprices[x] - 4*chocolateprices[x] - roseprices[x] for x in range(len(basketprices))]
+
+    # maxmid = 0
+# for mid in range(330, 440):
+    portion = 0.206272493194264
+    for arb in range(0, 200, 2):
+        newpnl = estimatePNL(difference, portion, arb)
+        newpnl += estimatePNL(difference2, portion, arb)
+        newpnl += estimatePNL(difference3, portion, arb)
+        if newpnl > pnl:
+            pnl = newpnl
+            maxarb = arb
     print(maxarb)
-    print(maxmid)
+    tiltedtowers = difference+difference2 + difference3
+    x = [a for a in range(len(tiltedtowers))]
+    y= [tiltedtowers[a] for a in range(len(tiltedtowers))]
+    plt.plot(x, y)
+    plt.show()
     print(pnl)
     return
 printBestCombo("round-3-island-data-bottle/prices_round_3_day_2.csv", "round-3-island-data-bottle/prices_round_3_day_0.csv", "round-3-island-data-bottle/prices_round_3_day_1.csv")

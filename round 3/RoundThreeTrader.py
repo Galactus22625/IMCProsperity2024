@@ -57,13 +57,13 @@ class Trader:
     
     def basketTrader(self, orderDepth, strawberryOrders, chocolateOrders, roseOrders, positions):
         currentPosition = positions.get("GIFT_BASKET", 0)
-        positionLimit = 58
+        positionLimit = 60
         orders: List[Order] = []
         strawberryorders: List[Order] = []
         chocolateorders: List[Order] = []
         roseorders: List[Order] = []
-        basketMarkup = 395            #calculated ideal from all 3 datasets, small testset from website not same as other data
-        arbitrageLimit = 55
+        basketMarkup = 380      #alculated ideal from all 3 datasets, using calculated mean diff
+        arbitrageLimit = 40
 
         basketmidPrice = self.getMidPrice(orderDepth)
         strawberryPrice = self.getMidPrice(strawberryOrders)
@@ -78,10 +78,44 @@ class Trader:
         elif difference < -arbitrageLimit:
             orders = self.hedgeTrader("GIFT_BASKET", orderDepth, currentPosition, positionLimit)
 
-        # # # #hedge loses money?/ maybe cant trade because basekt derived form contents not other way around
+        #Can only predict forwards, can't go from basket to components?
+
+        rosePercent = 0.206272493194264
+        roseLimit = 12
+        # chocolatePercent = 0.11254773547564821
+        # chocolateLimit = 8
+        strawberryPercent = 0.05725730161380604
+        strawberryLimit = 6
+        predictedRoseValue = (predictedBasketPrice - basketMarkup) * rosePercent
+        # predictedChocolateValue = (predictedBasketPrice - basketMarkup) * chocolatePercent
+        predictedStrawberryValue = (predictedBasketPrice - basketMarkup) * strawberryPercent
+        differenceRose = rosePrice - predictedRoseValue
+        # differenceChocolate = chocolatePrice - predictedChocolateValue
+        differenceStrawberry = strawberryPrice - predictedStrawberryValue
+        if differenceRose > roseLimit:
+            roseorders = self.hedgeTrader("ROSES", roseOrders, positions.get("ROSES", 0), -positionLimit)
+        elif differenceRose < -roseLimit:
+            roseorders = self.hedgeTrader("ROSES", roseOrders, positions.get("ROSES", 0), positionLimit)
+
+        # if differenceChocolate > chocolateLimit:
+        #     chocolateorders = self.hedgeTrader("CHOCOLATE", chocolateOrders, positions.get("CHOCOLATE", 0), -250)
+        # elif differenceChocolate < -chocolateLimit:
+        #     chocolateorders = self.hedgeTrader("CHOCOLATE", chocolateOrders, positions.get("CHOCOLATE", 0), 250)
+
+        if differenceStrawberry > strawberryLimit:
+            strawberryorders = self.hedgeTrader("STRAWBERRIES", strawberryOrders, positions.get("STRAWBERRIES", 0), -340)
+        elif differenceStrawberry < -strawberryLimit:
+            strawberryorders = self.hedgeTrader("STRAWBERRIES", strawberryOrders, positions.get("STRAWBERRIES", 0), 340)
+        
+
+        # strawberryposition = positions.get("STRAWBERRIES", 0)
+        # chocolateposition = positions.get("CHOCOLATE", 0)
+        # roseposition = positions.get("ROSES", 0)
+        # print(f"Difference of Strawberry from base price prediction {differenceStrawberry}, Strawberry Position {strawberryposition}")
+        # print(f"Difference of Chocolate from base price prediction {differenceChocolate}, Chocolate Position {chocolateposition}")
+        # print(f"Difference of Rose from base price prediction {differenceRose}, Rose Position {roseposition}")
 
         print(f"Difference of Basket from base price prediction {difference}, GiftBasketPosition {currentPosition}")
-
         return orders, strawberryorders, chocolateorders, roseorders
 
     def orchidTrader(self, observations, position, orchidData):
