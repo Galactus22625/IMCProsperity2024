@@ -13,56 +13,41 @@ for row in range(5):
         print(f"{(10- Hunters[row][column]): .0f}", end = ", ")
     print("", end = "\n")
     
+def printGridPayouts(percentChoose):
+    for row in range(5):
+        for column in range(5):
+            print(f"{BaseMoney * Multiplier[row][column]/(Hunters[row][column]+percentChoose): .0f}", end = ", ")
+        print("", end = "\n")
+    return
+    
 print("money with no percent")
+printGridPayouts(0)
+
 for row in range(5):
     for column in range(5):
-        print(f"{BaseMoney * Multiplier[row][column]/Hunters[row][column]: .0f}", end = ", ")
         BaseList.append((rowNames[row] + columnNames[column], BaseMoney * Multiplier[row][column]/Hunters[row][column]))
-
-    print("", end = "\n")
 BaseList.sort(key = lambda x: x[1], reverse=True)
 for thing in BaseList:
     print(thing)
 
 print("money with aveage percent, 1% each")
-for row in range(5):
-    for column in range(5):
-        print(f"{BaseMoney * Multiplier[row][column]/(Hunters[row][column]+1): .0f}", end = ", ")
-    print("", end = "\n")
+printGridPayouts(1)
 
 print("money with aveage percent, 2.5% each")
-for row in range(5):
-    for column in range(5):
-        print(f"{BaseMoney * Multiplier[row][column]/(Hunters[row][column]+2.5): .0f}", end = ", ")
-    print("", end = "\n")
+printGridPayouts(2.5)
 
 print("money with aveage percent, 4% each")
-for row in range(5):
-    for column in range(5):
-        print(f"{BaseMoney * Multiplier[row][column]/(Hunters[row][column]+4): .0f}", end = ", ")
-    print("", end = "\n")
+printGridPayouts(4)
 
 print("money with aveage percent, 8% each")
-for row in range(5):
-    for column in range(5):
-        print(f"{BaseMoney * Multiplier[row][column]/(Hunters[row][column]+8): .0f}", end = ", ")
-    print("", end = "\n")
+printGridPayouts(8)
 
 print("money with aveage percent, 10% each")
-for row in range(5):
-    for column in range(5):
-        print(f"{BaseMoney * Multiplier[row][column]/(Hunters[row][column]+10): .0f}", end = ", ")
-    print("", end = "\n")
+printGridPayouts(10)
 
 print("money with max percent everyone uses all expeditions")
-for row in range(5):
-    for column in range(5):
-        print(f"{BaseMoney * Multiplier[row][column]/(Hunters[row][column]+33): .0f}", end = ", ")
-    print("", end = "\n")
+printGridPayouts(33)
 
 print("money with max percent everyone uses one expedition")
-for row in range(5):
-    for column in range(5):
-        print(f"{BaseMoney * Multiplier[row][column]/(Hunters[row][column]+100): .0f}", end = ", ")
-    print("", end = "\n")
+printGridPayouts(100)
 
