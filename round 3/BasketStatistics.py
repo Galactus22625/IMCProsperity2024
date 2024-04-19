@@ -98,9 +98,9 @@ def printBestCombo(file1, file2, file3):
     # print(difference)
     # print(min(difference))
     # print(max(difference))
-    difference = [strawberryprices[x] - truestrawberry[x] for x in range(len(strawberryprices))]    # print(max(difference))
-    difference2 = [strawberryprices2[x] - truestrawberry2[x] for x in range(len(strawberryprices))]    # print(max(difference))
-    difference3 = [strawberryprices3[x] - truestrawberry3[x] for x in range(len(strawberryprices))]
+    difference = [roseprices[x] - truerose[x] for x in range(len(roseprices))]    # print(max(difference))
+    difference2 = [roseprices2[x] - truerose2[x] for x in range(len(roseprices))]    # print(max(difference))
+    difference3 = [roseprices3[x] - truerose3[x] for x in range(len(roseprices))]
     maxarb = 0
     pnl = 0
 
@@ -118,14 +118,15 @@ def printBestCombo(file1, file2, file3):
             pnl = newpnl
             maxarb = arb
     print(maxarb)
+    basketpricedif = [baskets[a] - strawberry[a] * 6 - chocolate[a] * 4 - rose[a] - 380 for a in range(len(baskets))]
     tiltedtowers = difference+difference2 + difference3
-    x = [a for a in range(len(tiltedtowers))]
-    y= [tiltedtowers[a] for a in range(len(tiltedtowers))]
+    x = [a for a in range(len(baskets))]
+    y= [tiltedtowers[a] for a in range(len(basketpricedif))]
     plt.plot(x, y)
     plt.show()
     print(pnl)
     return
-printBestCombo("round-3-island-data-bottle/prices_round_3_day_2.csv", "round-3-island-data-bottle/prices_round_3_day_0.csv", "round-3-island-data-bottle/prices_round_3_day_1.csv")
+printBestCombo("round-3-island-data-bottle/prices_round_3_day_0.csv", "round-3-island-data-bottle/prices_round_3_day_1.csv", "round-3-island-data-bottle/prices_round_3_day_2.csv")
 # x = [a for a in range(1000)]
 # y= [basketprices[a] for a in range(1000)]
 # plt.plot(x, y)

@@ -25,8 +25,8 @@ printGridPayouts(0)
 
 for row in range(5):
     for column in range(5):
-        BaseList.append((rowNames[row] + columnNames[column], BaseMoney * Multiplier[row][column]/Hunters[row][column]))
-BaseList.sort(key = lambda x: x[1], reverse=True)
+        BaseList.append((rowNames[row] + columnNames[column], Multiplier[row][column], BaseMoney * Multiplier[row][column]/Hunters[row][column]))
+BaseList.sort(key = lambda x: x[2], reverse=True)
 for thing in BaseList:
     print(thing)
 

@@ -97,6 +97,7 @@ class Trader:
         elif differenceRose < -roseLimit:
             roseorders = self.hedgeTrader("ROSES", roseOrders, positions.get("ROSES", 0), positionLimit)
 
+
         # if differenceChocolate > chocolateLimit:
         #     chocolateorders = self.hedgeTrader("CHOCOLATE", chocolateOrders, positions.get("CHOCOLATE", 0), -250)
         # elif differenceChocolate < -chocolateLimit:
