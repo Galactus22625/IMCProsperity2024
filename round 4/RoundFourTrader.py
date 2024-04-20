@@ -30,10 +30,48 @@ class Trader:
                 case "GIFT_BASKET":
                     tradeOrders[product], tradeOrders["STRAWBERRIES"], tradeOrders["CHOCOLATE"], tradeOrders["ROSES"] = self.basketTrader(state.order_depths[product], state.order_depths["STRAWBERRIES"], state.order_depths["CHOCOLATE"], state.order_depths["ROSES"], state.position)
 
+                case "COCONUT_COUPON":
+                    tradeOrders[product], tradeOrders["COCONUT"] = self.coconutTrader(state.order_depths["COCONUT"], state.position.get("COCONUT", 0), state.order_depths[product], state.position.get(product, 0))
 
         traderDataJson = encode(traderdata) #string(starfruitprice) #delivered as TradeingState.traderdata
         return tradeOrders, conversions, traderDataJson
     #buy when break apart, return to 0 when together
+    def coconutTrader(self, coconutOrderDepth, coconutPosition, coconutCouponOrderDepth, coconutCouponPosition):
+        #trade coconut coupons, hedge with coconut
+        coconutPositionLimit = 300
+        couponPositonLimit = 600
+        couponBuyLimit = couponPositonLimit - coconutCouponPosition
+        couponSellLimit = couponPositonLimit + coconutCouponPosition
+        coconutOrders = []
+        coconutCouponOrders = []
+        divergeLimit = 0
+
+        if (not coconutOrderDepth.buy_orders or not coconutOrderDepth.sell_orders or not coconutCouponOrderDepth.buy_orders or not coconutCouponOrderDepth.sell_orders):
+            return [], []
+        coconutPrice = self.getMidPrice(coconutOrderDepth)
+        coconutCouponPrice = self.getMidPrice(coconutCouponOrderDepth)
+
+        #predicted coconut = coupon + difference (9365)
+        #true relation coconutprice - 10000 = (predictedcoconut - 10000) * 1.8
+        predictedCoconut = coconutCouponPrice + 9365
+        trueRelationCoconut = coconutPrice - 10000
+        trueRelationCoupon = (predictedCoconut - 10000) * 1.8341708
+
+        if trueRelationCoconut > trueRelationCoupon + divergeLimit:
+            coconutCouponOrders, couponBuyLimit, couponSellLimit = self.orderBookTrader("COCONUT_COUPON", coconutCouponOrderDepth, couponBuyLimit, couponSellLimit, "BUY")
+        elif trueRelationCoupon + divergeLimit > trueRelationCoconut:
+            coconutCouponOrders, couponBuyLimit, couponSellLimit = self.orderBookTrader("COCONUT_COUPON", coconutCouponOrderDepth, couponBuyLimit, couponSellLimit, "SELL")
+        
+        #marketmake at way above and way below? probably not needed since it is a shift back and forth strat
+
+        averagecouponspercoconut = 1.5748031496
+        coconutsneededtohedge = min(coconutPositionLimit, abs(coconutCouponPosition/averagecouponspercoconut))
+        if coconutCouponPosition > 0:
+            coconutsneededtohedge = coconutsneededtohedge * -1 
+        # coconutOrders = self.hedgeTrader("COCONUT", coconutOrderDepth, coconutPosition, round(coconutsneededtohedge))
+        print(f"coconut positoin {coconutPosition}, coupon positoin {coconutCouponPosition}")
+        return coconutCouponOrders, coconutOrders
+    
     def getMidPrice(self, orderDepth):
         active_buy_orders = list(orderDepth.buy_orders.items())
         active_buy_orders.sort(key = lambda x: x[0], reverse = True)
@@ -42,6 +80,25 @@ class Trader:
         midprice = (active_buy_orders[0][0] + active_sell_orders[0][0])/2
         return midprice
     
+    def orderBookTrader(self, product, orderDepth, buyLimit, sellLimit, buyorsell):
+        orders = []
+        buylimit = buyLimit
+        selllimit = sellLimit
+        if buyorsell == "BUY":
+            active_sell_orders = list(orderDepth.sell_orders.items())
+            active_sell_orders.sort(key = lambda x: x[0], reverse = False)
+            for price, quantity in active_sell_orders:
+                orders.append(Order(product, price, min(abs(quantity), buylimit)))
+                buylimit -= min(abs(quantity), buylimit)
+        if buyorsell == "SELL":
+            active_buy_orders = list(orderDepth.buy_orders.items())
+            active_buy_orders.sort(key = lambda x: x[0], reverse = True)
+            for price, quantity in active_buy_orders:
+                orders.append(Order(product, price, -min(abs(quantity), selllimit)))
+                selllimit -= min(abs(quantity), selllimit)
+        return orders, buylimit, selllimit
+                
+
     def hedgeTrader(self, product, orderDepth, currentPosition, intendedPosition):
         tradeDif = intendedPosition - currentPosition
         orders = []

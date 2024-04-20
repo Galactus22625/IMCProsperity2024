@@ -86,7 +86,7 @@ print("\n")
 for bid1 in range(950,978):
     guaranteed = profitfor1(bid1)
     # maxprofitifbid1(bid1)
-    totalprofit, bid2 = maxprofitifbid1withbid2constraint(bid1, 981)
+    totalprofit, bid2 = maxprofitifbid1withbid2constraint(bid1, 980)
     print(f"Bids are {(bid1, bid2)} with guaranteed profit {guaranteed} and totalprofit {totalprofit}")
 
 print("\n")
@@ -97,6 +97,6 @@ for bid2 in range(977,1001):
 
 # print("\n") about 2000 per
 # for bid2 in range(977, 991):
-#     for bid2average in range(bid2, bid2+8):
-#         bid1 = maxbid1forbid2[bid2]
-#         print(f"volatility of optimal at bid2 {bid2}, bids are {bid1, bid2}, for bid2average {bid2average} profit of {calculateprofit(allfishes, bid1, bid2, bid2average)}")
+# for bid2average in range(bid2, bid2+8):
+#     bid1 = maxbid1forbid2[bid2]
+#     print(f"volatility of optimal at bid2 {bid2}, bids are {bid1, bid2}, for bid2average {bid2average} profit of {calculateprofit(allfishes, bid1, bid2, bid2average)}")
