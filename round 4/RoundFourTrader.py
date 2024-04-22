@@ -64,8 +64,8 @@ class Trader:
         
         #marketmake at way above and way below? probably not needed since it is a shift back and forth strat
 
-        averagecouponspercoconut = 1.5748031496
-        coconutsneededtohedge = min(coconutPositionLimit, abs(coconutCouponPosition/averagecouponspercoconut))
+        couponspercoconut = coconutPrice/coconutCouponPrice
+        coconutsneededtohedge = min(coconutPositionLimit, abs(coconutCouponPosition*couponspercoconut))
         if coconutCouponPosition > 0:
             coconutsneededtohedge = coconutsneededtohedge * -1 
         # coconutOrders = self.hedgeTrader("COCONUT", coconutOrderDepth, coconutPosition, round(coconutsneededtohedge))

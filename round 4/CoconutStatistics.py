@@ -49,8 +49,7 @@ for scaledmultiplier in range(18341700,18341800, 1):
         bestspread = modeldifavg
     print(modeldifavg)
 print(bestmultiplier)
-# plt.plot(x, cocpredictfrom1000timessome)
-# plt.plot(x, coconutfrom1000)
+
 coconutfrom1000 = [coconutprices[a] - 10000 for a in range(len(coconutprices))]
 cocpredictfrom1000timessome = [(predictedcoconut[a] - 10000)*bestmultiplier for a in range(len(coconutprices))]
 modeldif = [coconutfrom1000[a] - cocpredictfrom1000timessome[a] for a in range(len(coconutprices))]
@@ -58,7 +57,9 @@ modeldif = [coconutfrom1000[a] - cocpredictfrom1000timessome[a] for a in range(l
 
 #predicted coconut = coupon + difference (9365)
 #true relation coconutprice - 10000 = (predictedcoconut - 10000) * 1.8
-plt.plot(x[20000::], modeldif[20000::])
+plt.plot(x, cocpredictfrom1000timessome)
+plt.plot(x, coconutfrom1000)
+plt.plot(x, modeldif)
 # plt.plot(x, coconutfrom1000)
 # plt.plot(x, cocpredictfrom1000timessome)
 
