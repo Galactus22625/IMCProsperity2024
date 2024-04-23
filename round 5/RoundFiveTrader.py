@@ -18,31 +18,50 @@ class Trader:
         conversions = 0     #for testing when orchids is 
         for product in state.order_depths:
             match product:
-                case "AMETHYSTS":
-                   tradeOrders[product] = self.amethystsTrader(state.order_depths[product], state.position.get(product, 0))
+                # case "AMETHYSTS":
+                #    tradeOrders[product] = self.amethystsTrader(state.order_depths[product], state.position.get(product, 0))
 
-                case "STARFRUIT":
-                   tradeOrders[product], traderdata["STARFRUIT"] = self.starFruitTrader(state.order_depths[product], state.position.get(product, 0), state.timestamp, traderdata.get("STARFRUIT", {}))
+                # case "STARFRUIT":
+                #     tradeOrders[product], traderdata["STARFRUIT"] = self.starFruitTrader(state.order_depths[product], state.position.get(product, 0), state.timestamp, traderdata.get("STARFRUIT", {}))
+                #     # tradeOrders[product], traderdata["STARFRUIT"] = self.newStarfruitTrade(state.market_trades.get(product, []), state.position.get(product, 0), state.timestamp, traderdata.get("STARFRUIT", {}))
+                # case "ORCHIDS":
+                #     tradeOrders[product], conversions, traderdata["ORCHIDS"] = self.orchidTrader(state.observations.conversionObservations[product], state.position.get(product,0), traderdata.get("ORCHIDS", {"traded": [0], "markup": 1.5}))
 
-                case "ORCHIDS":
-                    tradeOrders[product], conversions, traderdata["ORCHIDS"] = self.orchidTrader(state.observations.conversionObservations[product], state.position.get(product,0), traderdata.get("ORCHIDS", {"traded": [0], "markup": 1.5}))
+                # case "GIFT_BASKET":
+                #     tradeOrders[product] = self.basketTrader(state.order_depths[product], state.order_depths["STRAWBERRIES"], state.order_depths["CHOCOLATE"], state.order_depths["ROSES"], state.position)
 
-                case "GIFT_BASKET":
-                    tradeOrders[product], tradeOrders["STRAWBERRIES"], tradeOrders["CHOCOLATE"], tradeOrders["ROSES"] = self.basketTrader(state.order_depths[product], state.order_depths["STRAWBERRIES"], state.order_depths["CHOCOLATE"], state.order_depths["ROSES"], state.position)
+                # case "CHOCOLATE":
+                #     tradeOrders[product], traderdata[product] = self.basketComponentTrader(state.market_trades.get(product, []), state.position.get(product, 0), state.timestamp, traderdata.get(product, {}), product, 250)
+    
+                # case "STRAWBERRIES":
+                #     tradeOrders[product], traderdata[product] = self.basketComponentTrader(state.market_trades.get(product, []), state.position.get(product, 0), state.timestamp, traderdata.get(product, {}), product, 350)
+  
+                # case "ROSES":
+                #     tradeOrders[product], traderdata[product] = self.basketComponentTrader(state.market_trades.get(product, []), state.position.get(product, 0), state.timestamp, traderdata.get(product, {}), product, 60)
+ 
+                # case "COCONUT_COUPON":
+                #     tradeOrders[product] = self.couponTrader(state.order_depths["COCONUT"], state.order_depths[product], state.position.get(product, 0))
 
-                case "COCONUT_COUPON":
-                    tradeOrders[product], tradeOrders["COCONUT"] = self.coconutTrader(state.order_depths["COCONUT"], state.position.get("COCONUT", 0), state.order_depths[product], state.position.get(product, 0))
+                case "COCONUT":
+                    tradeOrders[product] = self.coconutTrader(state.order_depths["COCONUT"], state.market_trades.get(product, []), state.position.get(product,0), state.timestamp)
+
+        knownTraders = {"AMETHYSTS":['Adam', 'Amelia', 'Remy', 'Rhianna', 'Ruby', 'Valentina', 'Vinnie', 'Vladimir'],"STARFRUIT":['Adam', 'Amelia', 'Remy', 'Rhianna', 'Ruby', 'Valentina', 'Vinnie', 'Vladimir'],"ROSES":['Remy', 'Rhianna', 'Vinnie', 'Vladimir'],"CHOCOLATE":['Remy', 'Vinnie', 'Vladimir'],"STRAWBERRIES":['Remy', 'Vinnie', 'Vladimir'],"GIFT_BASKET":['Rhianna', 'Ruby', 'Vinnie', 'Vladimir'],"COCONUT_COUPON":['Rhianna', 'Ruby', 'Valentina', 'Vinnie', 'Vladimir'],"COCONUT":['Raj', 'Rhianna', 'Vinnie'], "ORCHIDS":[]}
+        for product in state.own_trades:
+            trades = state.own_trades[product]
+            for trade in trades:
+                if trade.buyer not in knownTraders[product] and trade.buyer != "SUBMISSION":
+                    print(f"Traded {product} with unknowntrader {trade.buyer} for price of {trade.price} and quantity {trade.quantity} at {trade.timestamp}")
+                if trade.seller not in knownTraders[product] and trade.seller != "SUBMISSION":
+                    print(f"Traded {product} with unknowntrader {trade.seller} for price of {trade.price} and quantity {trade.quantity} at {trade.timestamp}")
 
         traderDataJson = encode(traderdata) #string(starfruitprice) #delivered as TradeingState.traderdata
         return tradeOrders, conversions, traderDataJson
     #buy when break apart, return to 0 when together
-    def coconutTrader(self, coconutOrderDepth, coconutPosition, coconutCouponOrderDepth, coconutCouponPosition):
+    def couponTrader(self, coconutOrderDepth, coconutCouponOrderDepth, coconutCouponPosition):
         #trade coconut coupons, hedge with coconut
-        coconutPositionLimit = 300
         couponPositonLimit = 600
         couponBuyLimit = couponPositonLimit - coconutCouponPosition
         couponSellLimit = couponPositonLimit + coconutCouponPosition
-        coconutOrders = []
         coconutCouponOrders = []
         divergeLimit = 0
 
@@ -62,16 +81,35 @@ class Trader:
         elif trueRelationCoupon + divergeLimit > trueRelationCoconut:
             coconutCouponOrders, couponBuyLimit, couponSellLimit = self.orderBookTrader("COCONUT_COUPON", coconutCouponOrderDepth, couponBuyLimit, couponSellLimit, "SELL")
         
-        #marketmake at way above and way below? probably not needed since it is a shift back and forth strat
 
-        couponspercoconut = coconutPrice/coconutCouponPrice
-        coconutsneededtohedge = min(coconutPositionLimit, abs(coconutCouponPosition*couponspercoconut))
-        if coconutCouponPosition > 0:
-            coconutsneededtohedge = coconutsneededtohedge * -1 
-        # coconutOrders = self.hedgeTrader("COCONUT", coconutOrderDepth, coconutPosition, round(coconutsneededtohedge))
-        print(f"coconut positoin {coconutPosition}, coupon positoin {coconutCouponPosition}")
-        return coconutCouponOrders, coconutOrders
+        # print(f"coconut positoin {coconutPosition}, coupon positoin {coconutCouponPosition}")
+        return coconutCouponOrders
     
+    def coconutTrader(self, coconutOrderDepth, coconutMarketTrades, coconutPosition, currentTime):
+        #positoins are long short and neutral
+        coconutPositionLimit = 300
+        orders = []
+        timelimit = 2000
+        state = "NEUTRAL"
+        #rhianna buy when go down
+        #raj sell when go up
+        print(coconutMarketTrades)
+        for trade in coconutMarketTrades:
+            if trade.buyer == "Rhianna":
+                state = "SHORT"
+            if trade.seller == "Raj":
+                state = "LONG"
+            if trade.timestamp < currentTime - timelimit:
+                state = "NEUTRAL"
+        if state == "SHORT":
+            orders = self.hedgeTrader("COCONUT", coconutOrderDepth, coconutPosition, -coconutPositionLimit)
+        elif state == "LONG":
+            orders = self.hedgeTrader("COCONUT", coconutOrderDepth, coconutPosition, coconutPositionLimit)
+        elif state == "NEUTRAL":
+            orders = self.hedgeTrader("COCONUT", coconutOrderDepth, coconutPosition, 0)
+        return orders
+        
+
     def getMidPrice(self, orderDepth):
         active_buy_orders = list(orderDepth.buy_orders.items())
         active_buy_orders.sort(key = lambda x: x[0], reverse = True)
@@ -98,7 +136,6 @@ class Trader:
                 selllimit -= min(abs(quantity), selllimit)
         return orders, buylimit, selllimit
                 
-
     def hedgeTrader(self, product, orderDepth, currentPosition, intendedPosition):
         tradeDif = intendedPosition - currentPosition
         orders = []
@@ -116,9 +153,6 @@ class Trader:
         currentPosition = positions.get("GIFT_BASKET", 0)
         positionLimit = 60
         orders: List[Order] = []
-        strawberryorders: List[Order] = []
-        chocolateorders: List[Order] = []
-        roseorders: List[Order] = []
         basketMarkup = 380      #alculated ideal from all 3 datasets, using calculated mean diff
         arbitrageLimit = 40
 
@@ -136,8 +170,8 @@ class Trader:
             orders = self.hedgeTrader("GIFT_BASKET", orderDepth, currentPosition, positionLimit)
 
         #Can only predict forwards, can't go from basket to components?
-        print(f"Difference of Basket from base price prediction {difference}, GiftBasketPosition {currentPosition}")
-        return orders, strawberryorders, chocolateorders, roseorders
+        # print(f"Difference of Basket from base price prediction {difference}, GiftBasketPosition {currentPosition}")
+        return orders
 
     def orchidTrader(self, observations, position, orchidData):
         orders: List[Order] = []
@@ -157,7 +191,7 @@ class Trader:
             markup -= shiftspeed
         markup = max(markupMin, markup)
 
-        print(f"Orchid Markup: {markup}, Orchid position: {position}")
+        # print(f"Orchid Markup: {markup}, Orchid position: {position}")
         
         southsell = observations.askPrice
         costtobuyfromsouth = southsell + observations.importTariff + observations.transportFees
@@ -266,3 +300,132 @@ class Trader:
         starfruitData["sellorders"] = sellorders
         starfruitData["buyorders"] = buyorders
         return orders, starfruitData
+    
+    def newStarfruitTrade(self, marketTrades, currentPosition, currentTime, oldstarfruitData):
+        positionLimit = 20
+        buyLimit = positionLimit - currentPosition
+        sellLimit = positionLimit + currentPosition
+        nextTime = currentTime + 100
+        dataTimeLimit = 1500
+        orders: List[Order] = []
+        #try two strategies
+        #undercut valentina
+        #match remy
+        if oldstarfruitData == {}:
+            starfruitData = {}
+            starfruitData["lastsellprice"] = []
+            starfruitData["lastbuyprice"] = []
+        else:
+            starfruitData = oldstarfruitData
+
+        sellprice = [transaction for transaction in starfruitData["lastsellprice"] if transaction[0] > currentTime - dataTimeLimit]
+        buyprice = [transaction for transaction in starfruitData["lastbuyprice"] if transaction[0] > currentTime - dataTimeLimit]
+
+
+        for trade in marketTrades:
+            print(trade.timestamp)
+            print(currentTime)
+            if trade.timestamp == currentTime - 100:
+                if trade.buyer == "Remy":
+                    sellprice.append([trade.timestamp, trade.price + 1])
+                if trade.seller == "Remy":
+                    buyprice.append([trade.timestamp, trade.price - 1])
+                if trade.buyer == "Valentina":
+                    buyprice.append([trade.timestamp, trade.price - 2])
+                if trade.seller == "Valentina":
+                    sellprice.append([trade.timestamp, trade.price+2])
+                if trade.buyer =="Amelia" or trade.buyer == "Ruby":
+                    sellprice.append([trade.timestamp, trade.price])
+                if trade.seller == "Amelia" or trade.seller == "Ruby":
+                    buyprice.append([trade.timestamp, trade.price])
+                if trade.seller == "Vinnie":
+                    sellprice.append([trade.timestamp, trade.price])
+                if trade.buyer == "Vinnie":
+                    buyprice.append([trade.timestamp, trade.price - 1])
+                if trade.buyer == "Vladimir":
+                    buyprice.append([trade.timestamp, trade.price -1])
+                if trade.seller == "Vladimir":
+                    sellprice.append([trade.timestamp, trade.price + 1])
+
+        print(sellprice)
+        print(buyprice)
+
+        predictedBuyPrice = None
+        predictedSellPrice = None
+        buypricetimes = [a[0] for a in buyprice]
+        sellpricetimes = [a[0] for a in sellprice]
+        if len(set(buypricetimes)) > 1:
+            x = [a[0] for a in buyprice]
+            y = [a[1] for a in buyprice]
+            slope, intercept = linear_regression(x, y)
+            predictedBuyPrice = slope * nextTime + intercept
+        if len(set(sellpricetimes)) > 1:
+            x = [a[0] for a in sellprice]
+            y = [a[1] for a in sellprice]
+            slope, intercept = linear_regression(x, y)
+            predictedSellPrice = slope * nextTime + intercept
+
+        if predictedBuyPrice != None and predictedSellPrice != None:
+            orders.append(Order("STARFRUIT", int(predictedBuyPrice) -2, buyLimit))
+            orders.append(Order("STARFRUIT", int(predictedSellPrice) + 2, -sellLimit))
+
+        starfruitData["lastsellprice"] = sellprice
+        starfruitData["lastbuyprice"] = buyprice
+        return orders, starfruitData
+    
+    def basketComponentTrader(self, marketTrades, currentPosition, currentTime, oldproductData, product, positionLimit):
+        positionLimit = positionLimit
+        buyLimit = positionLimit - currentPosition
+        sellLimit = positionLimit + currentPosition
+        nextTime = currentTime + 100
+        dataTimeLimit = 1500
+        orders: List[Order] = []
+        #try two strategies
+        #undercut valentina
+        #match remy
+        if oldproductData == {}:
+            productData = {}
+            productData["lastsellprice"] = []
+            productData["lastbuyprice"] = []
+        else:
+            productData = oldproductData
+
+        sellprice = [transaction for transaction in productData["lastsellprice"] if transaction[0] > currentTime - dataTimeLimit]
+        buyprice = [transaction for transaction in productData["lastbuyprice"] if transaction[0] > currentTime - dataTimeLimit]
+
+
+        for trade in marketTrades:
+            if trade.timestamp == currentTime - 100:
+                if trade.seller == "Vinnie":
+                    sellprice.append([trade.timestamp, trade.price])
+                if trade.buyer == "Vinnie":
+                    buyprice.append([trade.timestamp, trade.price])
+                if trade.seller == "Remy":
+                    buyprice.append([trade.timestamp, trade.price])
+                if trade.buyer == "Remy":
+                    sellprice.append([trade.timestamp, trade.price])
+                if trade.seller == "Vladimir":
+                    buyprice.append([trade.timestamp, trade.price])
+
+        predictedBuyPrice = None
+        predictedSellPrice = None
+        buypricetimes = [a[0] for a in buyprice]
+        sellpricetimes = [a[0] for a in sellprice]
+        if len(set(buypricetimes)) > 1:
+            x = [a[0] for a in buyprice]
+            y = [a[1] for a in buyprice]
+            slope, intercept = linear_regression(x, y)
+            predictedBuyPrice = slope * nextTime + intercept
+        if len(set(sellpricetimes)) > 1:
+            x = [a[0] for a in sellprice]
+            y = [a[1] for a in sellprice]
+            slope, intercept = linear_regression(x, y)
+            predictedSellPrice = slope * nextTime + intercept
+
+        if predictedBuyPrice != None and predictedSellPrice != None:
+            orders.append(Order(product, int(predictedBuyPrice), buyLimit))
+            orders.append(Order(product, int(predictedSellPrice), -sellLimit))
+
+        productData["lastsellprice"] = sellprice
+        productData["lastbuyprice"] = buyprice
+        return orders, productData

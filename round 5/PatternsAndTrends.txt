@@ -1,0 +1,22 @@
+Documentation of Patterns Discovered
+
+known traders
+For Product AMETHYSTS, 8 traders are ['Adam', 'Amelia', 'Remy', 'Rhianna', 'Ruby', 'Valentina', 'Vinnie', 'Vladimir']
+For Product STARFRUIT, 8 traders are ['Adam', 'Amelia', 'Remy', 'Rhianna', 'Ruby', 'Valentina', 'Vinnie', 'Vladimir']
+For Product ROSES, 4 traders are ['Remy', 'Rhianna', 'Vinnie', 'Vladimir']
+For Product CHOCOLATE, 3 traders are ['Remy', 'Vinnie', 'Vladimir']
+For Product STRAWBERRIES, 3 traders are ['Remy', 'Vinnie', 'Vladimir']
+For Product GIFT_BASKET, 4 traders are ['Rhianna', 'Ruby', 'Vinnie', 'Vladimir']
+For Product COCONUT_COUPON, 5 traders are ['Rhianna', 'Ruby', 'Valentina', 'Vinnie', 'Vladimir']
+For Product COCONUT, 3 traders are ['Raj', 'Rhianna', 'Vinnie']
+
+Amethysts Analysis
+
+Starfruit Analysis
+Remy Buy High and sells low
+Valentina sells high and buys low
+other traders are not very frequent
+two potential strategies: meet remy at his buy and sell prices, undercut Valentina an their sell and buy prices
+both failed, even with linear regression predictions, low yield product, move to baskets or coconuts
+
+for nontraded assests, look for signal traders
