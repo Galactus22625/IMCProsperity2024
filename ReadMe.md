@@ -1,0 +1,2 @@
+The Following Respository was created for the IMC Prosperity Ready Trader Go Competition.
+The goal was to create a trading algorithm that would make the most profit while trading several different products.

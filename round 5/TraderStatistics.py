@@ -161,8 +161,8 @@ def showpricegraph(product):
 
 # for product in Prices:
 #     showbuyandselltimes(product)
-showbuyandselltimes("STARFRUIT")
-# showtradesRelativePrice("rR")
+# showbuyandselltimes("STARFRUIT")
+showtradesRelativePrice("COCONUT")
 
 
 # showtrades("AMETHYSTS")

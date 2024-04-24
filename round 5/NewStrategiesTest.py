@@ -18,17 +18,18 @@ class Trader:
         conversions = 0     #for testing when orchids is 
         for product in state.order_depths:
             match product:
-                # case "AMETHYSTS":
-                #    tradeOrders[product] = self.amethystsTrader(state.order_depths[product], state.position.get(product, 0))
+                case "AMETHYSTS":
+                   tradeOrders[product] = self.amethystsTrader(state.order_depths[product], state.position.get(product, 0))
 
-                # case "STARFRUIT":
-                #     tradeOrders[product], traderdata["STARFRUIT"] = self.starFruitTrader(state.order_depths[product], state.position.get(product, 0), state.timestamp, traderdata.get("STARFRUIT", {}))
+                case "STARFRUIT":
+                    tradeOrders[product], traderdata["STARFRUIT"] = self.starFruitTrader(state.order_depths[product], state.position.get(product, 0), state.timestamp, traderdata.get("STARFRUIT", {}))
                 #     # tradeOrders[product], traderdata["STARFRUIT"] = self.newStarfruitTrade(state.market_trades.get(product, []), state.position.get(product, 0), state.timestamp, traderdata.get("STARFRUIT", {}))
-                # case "ORCHIDS":
-                #     tradeOrders[product], conversions, traderdata["ORCHIDS"] = self.orchidTrader(state.observations.conversionObservations[product], state.position.get(product,0), traderdata.get("ORCHIDS", {"traded": [0], "markup": 1.5}))
+                
+                case "ORCHIDS":
+                    tradeOrders[product], conversions, traderdata["ORCHIDS"] = self.orchidTrader(state.observations.conversionObservations[product], state.position.get(product,0), traderdata.get("ORCHIDS", {"traded": [0], "markup": 1.5}))
 
-                # case "GIFT_BASKET":
-                #     tradeOrders[product] = self.basketTrader(state.order_depths[product], state.order_depths["STRAWBERRIES"], state.order_depths["CHOCOLATE"], state.order_depths["ROSES"], state.position)
+                case "GIFT_BASKET":
+                    tradeOrders[product] = self.basketTrader(state.order_depths[product], state.order_depths["STRAWBERRIES"], state.order_depths["CHOCOLATE"], state.order_depths["ROSES"], state.position)
 
                 # case "CHOCOLATE":
                 #     tradeOrders[product], traderdata[product] = self.basketComponentTrader(state.market_trades.get(product, []), state.position.get(product, 0), state.timestamp, traderdata.get(product, {}), product, 250)
@@ -39,11 +40,11 @@ class Trader:
                 # case "ROSES":
                 #     tradeOrders[product], traderdata[product] = self.basketComponentTrader(state.market_trades.get(product, []), state.position.get(product, 0), state.timestamp, traderdata.get(product, {}), product, 60)
  
-                # case "COCONUT_COUPON":
-                #     tradeOrders[product] = self.couponTrader(state.order_depths["COCONUT"], state.order_depths[product], state.position.get(product, 0))
+                case "COCONUT_COUPON":
+                    tradeOrders[product] = self.couponTrader(state.order_depths["COCONUT"], state.order_depths[product], state.position.get(product, 0))
 
-                case "COCONUT":
-                    tradeOrders[product] = self.coconutTrader(state.order_depths["COCONUT"], state.market_trades.get(product, []), state.position.get(product,0), state.timestamp)
+                # case "COCONUT":
+                #     tradeOrders[product] = self.coconutTrader(state.order_depths["COCONUT"], state.market_trades.get(product, []), state.position.get(product,0), state.timestamp)
 
         knownTraders = {"AMETHYSTS":['Adam', 'Amelia', 'Remy', 'Rhianna', 'Ruby', 'Valentina', 'Vinnie', 'Vladimir'],"STARFRUIT":['Adam', 'Amelia', 'Remy', 'Rhianna', 'Ruby', 'Valentina', 'Vinnie', 'Vladimir'],"ROSES":['Remy', 'Rhianna', 'Vinnie', 'Vladimir'],"CHOCOLATE":['Remy', 'Vinnie', 'Vladimir'],"STRAWBERRIES":['Remy', 'Vinnie', 'Vladimir'],"GIFT_BASKET":['Rhianna', 'Ruby', 'Vinnie', 'Vladimir'],"COCONUT_COUPON":['Rhianna', 'Ruby', 'Valentina', 'Vinnie', 'Vladimir'],"COCONUT":['Raj', 'Rhianna', 'Vinnie'], "ORCHIDS":[]}
         for product in state.own_trades:
@@ -88,24 +89,27 @@ class Trader:
     def coconutTrader(self, coconutOrderDepth, coconutMarketTrades, coconutPosition, currentTime):
         #positoins are long short and neutral
         coconutPositionLimit = 300
+        buyLimit = coconutPositionLimit - coconutPosition
+        sellLimit = coconutPositionLimit + coconutPosition
         orders = []
-        timelimit = 2000
-        state = "NEUTRAL"
-        #rhianna buy when go down
-        #raj sell when go up
-        print(coconutMarketTrades)
+        timelimit = 400
+
+
+        sellprice = None
+        buyprice = None
+
         for trade in coconutMarketTrades:
-            if trade.buyer == "Rhianna":
-                state = "SHORT"
-            if trade.seller == "Raj":
-                state = "LONG"
-            if trade.timestamp < currentTime - timelimit:
-                state = "NEUTRAL"
-        if state == "SHORT":
-            orders = self.hedgeTrader("COCONUT", coconutOrderDepth, coconutPosition, -coconutPositionLimit)
-        elif state == "LONG":
-            orders = self.hedgeTrader("COCONUT", coconutOrderDepth, coconutPosition, coconutPositionLimit)
-        elif state == "NEUTRAL":
+            if trade.timestamp > currentTime - timelimit:
+                if trade.buyer == "Rhianna" or trade.buyer == "Raj":
+                    sellprice = trade.price
+                if trade.seller == "Raj" or trade.seller == "Rhianna":
+                    buyprice = trade.price
+
+        if buyprice != None:
+            orders.append(Order("COCONUT", buyprice, buyLimit))
+        if sellprice != None:
+            orders.append(Order("COCONUT", sellprice, -sellLimit))
+        if buyprice == None and sellprice == None:
             orders = self.hedgeTrader("COCONUT", coconutOrderDepth, coconutPosition, 0)
         return orders
         
