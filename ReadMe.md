@@ -1,4 +1,5 @@
 The Following Respository was created for the IMC Prosperity Ready Trader Go Competition in 2024.
-We are currenlty placed 149 out of 7000 teams.
-The goal was to create a trading algorithm that would make the most profit while trading several different products.
-Used statistics, data anlysis, and game theory to develop trading strategies.  We then tested our algorithm and iterated the desing in order to optimize our trades.
+Team name: Galactus
+Place: 124th out of 9,139 teams
+The goal was to make the most profit by creating a trading algorithm that would trade several different products and also solving several manual trading challenges.
+We used statistics, data anlysis, and game theory to develop trading strategies.  The program was written in python.  We then tested our algorithm and iterated the design in order to optimize our trades.
